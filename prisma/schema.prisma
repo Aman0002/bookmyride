@@ -1,0 +1,182 @@
+// Book My Ride - data model
+// Uses PostgreSQL (works locally and on serverless hosts like Vercel). Point
+// DATABASE_URL at your Postgres (Neon/Supabase/etc.). Statuses/types are stored
+// as strings (not DB enums) to stay portable. Allowed values live in
+// lib/constants.ts.
+
+generator client {
+  provider      = "prisma-client-js"
+  // "native" for local dev; the rhel target is the engine Vercel's runtime uses.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Route {
+  id          String         @id @default(cuid())
+  origin      String
+  destination String
+  active      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  schedules   TripSchedule[]
+  trips       Trip[]
+
+  @@unique([origin, destination])
+}
+
+model Car {
+  id          String   @id @default(cuid())
+  name        String
+  plateNumber String   @unique
+  totalSeats  Int      @default(4)
+  fuelType    String?
+  driverName  String?
+  driverPhone String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  trips       Trip[]
+}
+
+// Recurring departure template for a route (e.g. 06:00 daily).
+model TripSchedule {
+  id             String   @id @default(cuid())
+  route          Route    @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  routeId        String
+  departureTime  String // "HH:MM" 24h
+  daysOfWeek     String   @default("0,1,2,3,4,5,6") // comma-separated 0=Sun..6=Sat
+  sharedSeatPrice Int     @default(500)
+  privatePrice   Int      @default(4000)
+  seatsPerTrip   Int      @default(6)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  trips          Trip[]
+}
+
+// A concrete departure on a specific date.
+model Trip {
+  id            String    @id @default(cuid())
+  schedule      TripSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  scheduleId    String?
+  route         Route     @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  routeId       String
+  car           Car?      @relation(fields: [carId], references: [id], onDelete: SetNull)
+  carId         String?
+  date          DateTime // date of departure (midnight)
+  departureTime String // "HH:MM"
+  seatsTotal    Int       @default(6)
+  seatsBooked   Int       @default(0)
+  sharedSeatPrice Int     @default(500)
+  privatePrice  Int       @default(4000)
+  // OPEN = available; PRIVATE_BOOKED = taken as private; FULL = seats sold out; CANCELLED
+  status        String    @default("OPEN")
+  createdAt     DateTime  @default(now())
+  bookings      Booking[]
+
+  @@unique([routeId, date, departureTime])
+  @@index([date])
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  phone     String?
+  verified  Boolean   @default(false)
+  isAdmin   Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  bookings  Booking[]
+  reviews   Review[]
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+model Booking {
+  id               String   @id @default(cuid())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  trip             Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId           String
+  // SHARED | PRIVATE
+  type             String
+  seats            Int      @default(1)
+  amount           Int
+  // ONLINE | COD
+  paymentMode      String
+  pickupAddress    String
+  pickupLat        Float
+  pickupLng        Float
+  pickupDistanceKm Float
+  passengerName    String
+  passengerPhone   String
+  // PENDING | CONFIRMED | CANCELLED
+  status           String   @default("PENDING")
+  createdAt        DateTime @default(now())
+  payment          Payment?
+  review           Review?
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  booking           Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId         String   @unique
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  amount            Int
+  // CREATED | PAID | FAILED
+  status            String   @default("CREATED")
+  createdAt         DateTime @default(now())
+}
+
+// Single row driving pickup validation.
+model ServiceArea {
+  id        String   @id @default(cuid())
+  name      String   @default("Hisar")
+  centerLat Float
+  centerLng Float
+  radiusKm  Float    @default(10)
+  updatedAt DateTime @updatedAt
+}
+
+// Customer rating for a completed ride.
+model Review {
+  id        String   @id @default(cuid())
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  rating    Int // 1..5
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+// A driver applying to list their car on the platform.
+model DriverApplication {
+  id            String   @id @default(cuid())
+  driverName    String
+  phone         String
+  email         String
+  city          String   @default("Hisar")
+  carModel      String
+  plateNumber   String
+  seats         Int      @default(4)
+  fuelType      String?
+  message       String?
+  commissionPct Float    @default(7)
+  // PENDING | APPROVED | REJECTED
+  status        String   @default("PENDING")
+  reviewNote    String?
+  createdAt     DateTime @default(now())
+}
