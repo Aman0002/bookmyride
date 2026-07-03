@@ -80,7 +80,7 @@ export default async function BookPage({
             Verify to continue
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Enter your details and confirm the email code to book your ride.
+            Enter your details and confirm the SMS code sent to your mobile.
           </p>
           <div className="mt-4">
             <AuthPanel collectDetails />

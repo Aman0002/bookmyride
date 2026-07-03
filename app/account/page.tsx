@@ -134,8 +134,8 @@ export default async function AccountPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My bookings</h1>
           <p className="text-sm text-slate-500">
-            {user.name ? `${user.name} · ` : ""}
-            {user.email}
+            {user.name ? `${user.name}` : "Account"}
+            {user.phone ? ` · ${user.phone}` : ""}
           </p>
         </div>
         <LogoutButton />

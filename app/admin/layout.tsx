@@ -1,13 +1,12 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarClock,
   Car,
   Settings,
   UserPlus,
+  LogOut,
 } from "lucide-react";
-import { requireAdmin } from "@/lib/session";
 
 const nav = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -22,9 +21,6 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const admin = await requireAdmin();
-  if (!admin) redirect("/login?next=/admin");
-
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
       {/* Mobile top nav */}
@@ -57,6 +53,14 @@ export default async function AdminLayout({
                 <n.icon className="h-4 w-4" /> {n.label}
               </Link>
             ))}
+            <form action="/api/admin/logout" method="POST" className="mt-3 px-3">
+              <button
+                type="submit"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              >
+                <LogOut className="h-4 w-4" /> Logout
+              </button>
+            </form>
           </div>
         </aside>
         <div className="min-w-0 flex-1">{children}</div>

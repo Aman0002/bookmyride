@@ -1,8 +1,15 @@
 import { createHash, randomInt } from "crypto";
 import { prisma } from "./prisma";
 
-const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_ATTEMPTS = 5;
+export type OtpChannel = "SMS";
+
+export type OtpTarget = {
+  channel: OtpChannel;
+  email?: string | null;
+  phone?: string | null;
+};
 
 function hashCode(code: string) {
   return createHash("sha256").update(code).digest("hex");
@@ -12,16 +19,31 @@ export function generateCode(): string {
   return String(randomInt(0, 1_000_000)).padStart(6, "0");
 }
 
-export async function issueOtp(email: string): Promise<string> {
+function targetKey(target: OtpTarget) {
+  if (target.channel === "SMS") {
+    if (!target.phone) {
+      throw new Error("Phone number is required for SMS OTPs.");
+    }
+    return target.phone;
+  }
+
+  if (!target.email) {
+    throw new Error("Email is required for email OTPs.");
+  }
+  return target.email;
+}
+
+export async function issueOtp(target: OtpTarget): Promise<string> {
   const code = generateCode();
-  // Invalidate previous unconsumed codes for this email.
+  const key = targetKey(target);
+  // Invalidate previous unconsumed codes for this delivery target.
   await prisma.otpCode.updateMany({
-    where: { email, consumed: false },
+    where: { email: key, consumed: false },
     data: { consumed: true },
   });
   await prisma.otpCode.create({
     data: {
-      email,
+      email: key,
       codeHash: hashCode(code),
       expiresAt: new Date(Date.now() + OTP_TTL_MS),
     },
@@ -30,11 +52,12 @@ export async function issueOtp(email: string): Promise<string> {
 }
 
 export async function verifyOtp(
-  email: string,
+  target: OtpTarget,
   code: string
 ): Promise<{ ok: boolean; reason?: string }> {
+  const key = targetKey(target);
   const record = await prisma.otpCode.findFirst({
-    where: { email, consumed: false },
+    where: { email: key, consumed: false },
     orderBy: { createdAt: "desc" },
   });
   if (!record) return { ok: false, reason: "No active code. Request a new one." };

@@ -41,14 +41,12 @@ export default function NavClient({ loggedIn, isAdmin, displayName }: Props) {
             My bookings
           </Link>
         )}
-        {isAdmin && (
-          <Link
-            href="/admin"
-            className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
-          >
-            <ShieldCheck className="h-4 w-4" /> Admin
-          </Link>
-        )}
+        <Link
+          href="/admin"
+          className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
+        >
+          <ShieldCheck className="h-4 w-4" /> Admin
+        </Link>
         {loggedIn ? (
           <Link
             href="/account"
@@ -98,15 +96,13 @@ export default function NavClient({ loggedIn, isAdmin, displayName }: Props) {
                 My bookings
               </Link>
             )}
-            {isAdmin && (
-              <Link
-                href="/admin"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-1 rounded-lg px-3 py-3 text-base font-medium text-brand-700 hover:bg-brand-50"
-              >
-                <ShieldCheck className="h-4 w-4" /> Admin
-              </Link>
-            )}
+            <Link
+              href="/admin"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-1 rounded-lg px-3 py-3 text-base font-medium text-brand-700 hover:bg-brand-50"
+            >
+              <ShieldCheck className="h-4 w-4" /> Admin
+            </Link>
             {loggedIn ? (
               <Link
                 href="/account"

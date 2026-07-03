@@ -1,42 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { verifyOtp } from "@/lib/otp";
 import { createSession } from "@/lib/session";
 
 const schema = z.object({
-  code: z.string().length(6),
-  phone: z.string().trim().optional(),
-  channel: z.enum(["SMS"]).default("SMS"),
-  name: z.string().trim().min(1).optional(),
+  name: z.string().trim().optional().transform((value) => value?.trim() || undefined),
+  phone: z.string().trim().min(6),
+  providerData: z.unknown().optional(),
 });
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  }
-  if (!parsed.data.phone) {
-    return NextResponse.json({ error: "Mobile number is required to verify SMS codes." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid widget verification payload." }, { status: 400 });
   }
 
-  const result = await verifyOtp(
-    {
-      channel: "SMS",
-      phone: parsed.data.phone?.trim(),
-    },
-    parsed.data.code
-  );
-  if (!result.ok) {
-    return NextResponse.json({ error: result.reason }, { status: 400 });
-  }
+  const adminEmail = (process.env.ADMIN_EMAIL || "").toLowerCase();
 
   const existingUser = await prisma.user.findFirst({
     where: {
-      OR: [
-        ...(parsed.data.phone ? [{ phone: parsed.data.phone }] : []),
-      ],
+      OR: [{ phone: parsed.data.phone }],
     },
   });
 
@@ -45,16 +29,16 @@ export async function POST(req: NextRequest) {
         where: { id: existingUser.id },
         data: {
           verified: true,
+          phone: parsed.data.phone,
           ...(parsed.data.name ? { name: parsed.data.name } : {}),
-          ...(parsed.data.phone ? { phone: parsed.data.phone } : {}),
         },
       })
     : await prisma.user.create({
         data: {
           email: "",
           verified: true,
-          name: parsed.data.name,
           phone: parsed.data.phone,
+          name: parsed.data.name,
           isAdmin: false,
         },
       });
@@ -65,5 +49,12 @@ export async function POST(req: NextRequest) {
     isAdmin: user.isAdmin,
   });
 
-  return NextResponse.json({ ok: true, isAdmin: user.isAdmin });
+  return NextResponse.json({
+    ok: true,
+    isAdmin: user.isAdmin,
+    providerResponse:
+      process.env.NODE_ENV !== "production" && parsed.data.providerData
+        ? parsed.data.providerData
+        : undefined,
+  });
 }

@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { Car } from "lucide-react";
-import { getCurrentUser } from "@/lib/session";
+import { getAdminSession, getCurrentUser } from "@/lib/session";
 import { BRAND } from "@/lib/constants";
 import NavClient from "./NavClient";
 
 export default async function Navbar() {
   const user = await getCurrentUser();
+  const adminSession = await getAdminSession();
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
@@ -20,8 +21,8 @@ export default async function Navbar() {
 
         <NavClient
           loggedIn={!!user}
-          isAdmin={!!user?.isAdmin}
-          displayName={user ? user.name || user.email.split("@")[0] : null}
+          isAdmin={!!user?.isAdmin || !!adminSession}
+          displayName={user ? user.name || "Account" : null}
         />
       </div>
     </header>

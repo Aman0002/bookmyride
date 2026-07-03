@@ -5,26 +5,35 @@ import { formatDate, formatTime12h, formatINR } from "@/lib/utils";
 import { confirmBooking, cancelBooking } from "./actions";
 
 export default async function AdminDashboard() {
-  const [bookings, confirmedCount, pendingCount, revenueAgg] = await Promise.all([
-    prisma.booking.findMany({
-      include: { trip: { include: { route: true } }, user: true },
-      orderBy: { createdAt: "desc" },
-      take: 30,
-    }),
-    prisma.booking.count({ where: { status: "CONFIRMED" } }),
-    prisma.booking.count({ where: { status: "PENDING" } }),
-    prisma.booking.aggregate({
-      _sum: { amount: true },
-      where: { status: "CONFIRMED" },
-    }),
-  ]);
+  const bookings = await prisma.booking.findMany({
+    include: { trip: { include: { route: true } }, user: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const now = new Date();
+
+  const getTripDateTime = (trip: { date: Date | string; departureTime: string }) => {
+    const base = new Date(trip.date);
+    const [hours = 0, minutes = 0] = trip.departureTime
+      .split(":")
+      .map((value) => Number(value));
+    base.setHours(hours, minutes, 0, 0);
+    return base;
+  };
+
+  const upcomingBookings = bookings.filter((booking) => getTripDateTime(booking.trip) >= now);
+  const confirmedCount = upcomingBookings.filter((booking) => booking.status === "CONFIRMED").length;
+  const pendingCount = upcomingBookings.filter((booking) => booking.status === "PENDING").length;
+  const confirmedRevenue = upcomingBookings
+    .filter((booking) => booking.status === "CONFIRMED")
+    .reduce((sum, booking) => sum + booking.amount, 0);
 
   const stats = [
     { label: "Confirmed", value: confirmedCount, icon: CheckCircle2 },
     { label: "Pending", value: pendingCount, icon: Ticket },
     {
       label: "Revenue (confirmed)",
-      value: formatINR(revenueAgg._sum.amount ?? 0),
+      value: formatINR(confirmedRevenue),
       icon: IndianRupee,
     },
   ];
@@ -48,15 +57,15 @@ export default async function AdminDashboard() {
       </div>
 
       <h2 className="mt-10 text-lg font-semibold text-slate-900">
-        Recent bookings
+        Upcoming bookings
       </h2>
-      {bookings.length === 0 ? (
+      {upcomingBookings.length === 0 ? (
         <Card className="mt-4 p-8 text-center text-slate-500">
           No bookings yet.
         </Card>
       ) : (
         <div className="mt-4 space-y-3">
-          {bookings.map((b) => (
+          {upcomingBookings.map((b) => (
             <Card key={b.id} className="p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
@@ -83,13 +92,22 @@ export default async function AdminDashboard() {
                       {b.paymentMode === "COD" ? "COD" : "Online"}
                     </span>
                   </div>
-                  <div className="mt-1 text-sm text-slate-500">
-                    {b.passengerName} · {b.passengerPhone} ·{" "}
-                    <span className="text-slate-400">{b.user.email}</span>
-                  </div>
-                  <div className="mt-1 truncate text-sm text-slate-500">
-                    Pickup: {b.pickupAddress} ({b.pickupDistanceKm} km)
-                  </div>
+                  <div className="mt-2 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                <div>
+                  <div className="font-medium text-slate-700">User</div>
+                  <div>{b.user.name || "—"}</div>
+                  <div>{b.user.phone || "—"}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-slate-700">Booking</div>
+                  <div>Booked: {new Date(b.createdAt).toLocaleString()}</div>
+                  <div>Passenger: {b.passengerName}</div>
+                  <div>Passenger phone: {b.passengerPhone}</div>
+                </div>
+              </div>
+              <div className="mt-2 truncate text-sm text-slate-500">
+                Pickup: {b.pickupAddress} ({b.pickupDistanceKm} km)
+              </div>
                 </div>
 
                 <div className="flex items-center gap-2">

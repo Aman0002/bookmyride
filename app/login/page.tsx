@@ -22,7 +22,7 @@ export default async function LoginPage({
         Log in to Book My Ride
       </h1>
       <p className="mt-1 text-center text-sm text-slate-500">
-        We use a one-time email code - no passwords to remember.
+        Verify with SMS to log in or register instantly.
       </p>
       <Card className="mt-8 w-full p-6">
         <AuthPanel redirectTo={next || "/account"} collectDetails={false} />
