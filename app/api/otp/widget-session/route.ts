@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -18,24 +19,26 @@ export async function POST(req: NextRequest) {
     }
 
     const phone = parsed.data.phone.trim();
-    const fallbackEmail = `${phone.replace(/\D/g, "")}@bookmyride.local`;
+    const fallbackEmail = `${phone.replace(/\D/g, "")}-${randomUUID().slice(0, 8)}@bookmyride.local`;
 
-    const existingUser = await prisma.user.findFirst({
+    let user = await prisma.user.findFirst({
       where: {
         OR: [{ phone }],
       },
     });
 
-    const user = existingUser
-      ? await prisma.user.update({
-          where: { id: existingUser.id },
-          data: {
-            verified: true,
-            phone,
-            ...(parsed.data.name ? { name: parsed.data.name } : {}),
-          },
-        })
-      : await prisma.user.create({
+    if (user) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          verified: true,
+          phone,
+          ...(parsed.data.name ? { name: parsed.data.name } : {}),
+        },
+      });
+    } else {
+      try {
+        user = await prisma.user.create({
           data: {
             email: fallbackEmail,
             verified: true,
@@ -44,6 +47,17 @@ export async function POST(req: NextRequest) {
             isAdmin: false,
           },
         });
+      } catch (createError) {
+        if (createError instanceof Error && createError.message.includes("Unique constraint")) {
+          user = await prisma.user.findFirst({
+            where: { phone },
+          });
+          if (!user) throw createError;
+        } else {
+          throw createError;
+        }
+      }
+    }
 
     await createSession({
       userId: user.id,
