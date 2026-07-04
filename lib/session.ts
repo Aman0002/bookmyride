@@ -12,6 +12,7 @@ export type SessionPayload = {
   userId: string;
   email: string;
   isAdmin: boolean;
+  phone?: string;
 };
 
 export type AdminSessionPayload = {
@@ -72,6 +73,7 @@ export async function getSession(): Promise<SessionPayload | null> {
       userId: payload.userId as string,
       email: payload.email as string,
       isAdmin: Boolean(payload.isAdmin),
+      phone: typeof payload.phone === "string" ? payload.phone : undefined,
     };
   } catch {
     return null;

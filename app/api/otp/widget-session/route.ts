@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/session";
+import { isAdminPhone } from "@/lib/admin";
 
 const schema = z.object({
   name: z.string().trim().optional().transform((value) => value?.trim() || undefined),
@@ -27,6 +28,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const isAdminUser = isAdminPhone(phone);
+
     if (user) {
       user = await prisma.user.update({
         where: { id: user.id },
@@ -34,6 +37,7 @@ export async function POST(req: NextRequest) {
           verified: true,
           phone,
           ...(parsed.data.name ? { name: parsed.data.name } : {}),
+          isAdmin: isAdminUser,
         },
       });
     } else {
@@ -44,7 +48,7 @@ export async function POST(req: NextRequest) {
             verified: true,
             phone,
             name: parsed.data.name,
-            isAdmin: false,
+            isAdmin: isAdminUser,
           },
         });
       } catch (createError) {
@@ -63,6 +67,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       email: user.email ?? user.phone ?? "",
       isAdmin: user.isAdmin,
+      phone: user.phone ?? phone,
     });
 
     return NextResponse.json({

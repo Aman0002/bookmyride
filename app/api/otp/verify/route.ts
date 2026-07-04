@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { verifyOtp } from "@/lib/otp";
 import { createSession } from "@/lib/session";
+import { isAdminPhone } from "@/lib/admin";
 
 const schema = z.object({
   code: z.string().length(6),
@@ -42,6 +43,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const isAdminUser = isAdminPhone(phone);
+
     const user = existingUser
       ? await prisma.user.update({
           where: { id: existingUser.id },
@@ -49,6 +52,7 @@ export async function POST(req: NextRequest) {
             verified: true,
             ...(parsed.data.name ? { name: parsed.data.name } : {}),
             phone,
+            isAdmin: isAdminUser,
           },
         })
       : await prisma.user.create({
@@ -57,7 +61,7 @@ export async function POST(req: NextRequest) {
             verified: true,
             name: parsed.data.name,
             phone,
-            isAdmin: false,
+            isAdmin: isAdminUser,
           },
         });
 
@@ -65,6 +69,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       email: user.email ?? user.phone ?? "",
       isAdmin: user.isAdmin,
+      phone: user.phone ?? phone,
     });
 
     return NextResponse.json({ ok: true, isAdmin: user.isAdmin });

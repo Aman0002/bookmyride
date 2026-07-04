@@ -32,17 +32,18 @@ export default function NavClient({ loggedIn, isAdmin, displayName }: Props) {
       {/* Desktop */}
       <nav className="hidden items-center gap-1 md:flex">
         {links.map((l) => (
-          <Link key={l.href} href={l.href} className={linkClass(l.href)}>
+          <Link key={l.href} href={l.href} prefetch={false} className={linkClass(l.href)}>
             {l.label}
           </Link>
         ))}
         {loggedIn && (
-          <Link href="/account" className={linkClass("/account")}>
+          <Link href="/account" prefetch={false} className={linkClass("/account")}>
             My bookings
           </Link>
         )}
         <Link
           href="/admin"
+          prefetch={false}
           className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
         >
           <ShieldCheck className="h-4 w-4" /> Admin
@@ -50,6 +51,7 @@ export default function NavClient({ loggedIn, isAdmin, displayName }: Props) {
         {loggedIn ? (
           <Link
             href="/account"
+            prefetch={false}
             className="ml-1 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800"
           >
             {displayName}
@@ -57,6 +59,7 @@ export default function NavClient({ loggedIn, isAdmin, displayName }: Props) {
         ) : (
           <Link
             href="/login"
+            prefetch={false}
             className="ml-1 rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800"
           >
             Log in
@@ -81,6 +84,7 @@ export default function NavClient({ loggedIn, isAdmin, displayName }: Props) {
               <Link
                 key={l.href}
                 href={l.href}
+                prefetch={false}
                 onClick={() => setOpen(false)}
                 className="rounded-lg px-3 py-3 text-base font-medium text-slate-700 hover:bg-slate-100"
               >
@@ -90,6 +94,7 @@ export default function NavClient({ loggedIn, isAdmin, displayName }: Props) {
             {loggedIn && (
               <Link
                 href="/account"
+                prefetch={false}
                 onClick={() => setOpen(false)}
                 className="rounded-lg px-3 py-3 text-base font-medium text-slate-700 hover:bg-slate-100"
               >
@@ -98,6 +103,7 @@ export default function NavClient({ loggedIn, isAdmin, displayName }: Props) {
             )}
             <Link
               href="/admin"
+              prefetch={false}
               onClick={() => setOpen(false)}
               className="flex items-center gap-1 rounded-lg px-3 py-3 text-base font-medium text-brand-700 hover:bg-brand-50"
             >
@@ -106,6 +112,7 @@ export default function NavClient({ loggedIn, isAdmin, displayName }: Props) {
             {loggedIn ? (
               <Link
                 href="/account"
+                prefetch={false}
                 onClick={() => setOpen(false)}
                 className="mt-1 rounded-lg bg-slate-100 px-3 py-3 text-center text-base font-medium text-slate-800"
               >
@@ -114,6 +121,7 @@ export default function NavClient({ loggedIn, isAdmin, displayName }: Props) {
             ) : (
               <Link
                 href="/login"
+                prefetch={false}
                 onClick={() => setOpen(false)}
                 className="mt-1 rounded-lg bg-brand-700 px-4 py-3 text-center text-base font-semibold text-white"
               >

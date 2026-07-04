@@ -11,7 +11,7 @@ export default async function LoginPage({
 }) {
   const { next } = await searchParams;
   const session = await getSession();
-  if (session) redirect(next || "/account");
+  if (session) redirect(session.isAdmin ? next || "/admin" : next || "/account");
 
   return (
     <div className="mx-auto flex max-w-md flex-col items-center px-4 py-16">
