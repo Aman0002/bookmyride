@@ -38,11 +38,14 @@ export default async function SearchPage({
       departureTime: t.departureTime,
       departureEndTime: t.departureEndTime,
       sharedSeatsLeft: avail.sharedSeatsLeft,
+      sharedCapacity: avail.sharedCapacity,
       canShare: avail.canShare,
       canPrivate: avail.canPrivate,
       sharedSeatPrice: t.sharedSeatPrice,
       privatePrice: t.privatePrice,
       status: t.status,
+      carsTotal: t.carsTotal,
+      isExpired: avail.isExpired,
     };
   });
 

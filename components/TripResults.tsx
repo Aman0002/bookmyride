@@ -12,11 +12,14 @@ export type TripDTO = {
   departureTime: string;
   departureEndTime: string;
   sharedSeatsLeft: number;
+  sharedCapacity: number;
   canShare: boolean;
   canPrivate: boolean;
   sharedSeatPrice: number;
   privatePrice: number;
   status: string;
+  carsTotal: number;
+  isExpired: boolean;
 };
 
 type TimeFilter = "ALL" | "MORNING" | "AFTERNOON" | "EVENING";
@@ -87,7 +90,7 @@ export default function TripResults({ trips }: { trips: TripDTO[] }) {
             {visible.map((t, i) => {
               const seatsLeft = t.sharedSeatsLeft;
               const unavailable =
-                t.status === "FULL" || (!t.canShare && !t.canPrivate);
+                t.isExpired || t.status === "FULL" || (!t.canShare && !t.canPrivate);
               return (
                 <motion.div
                   key={t.id}
@@ -115,14 +118,15 @@ export default function TripResults({ trips }: { trips: TripDTO[] }) {
                             <span className="flex items-center gap-1 font-semibold text-slate-900">
                               <CarIcon className="h-4 w-4 text-brand-700" /> Pickup window
                             </span>
-                            {unavailable && <Badge color="red">Full</Badge>}
+                            {t.isExpired && <Badge color="red">Departed</Badge>}
+                            {!t.isExpired && unavailable && <Badge color="red">Full</Badge>}
                             {!unavailable && <Badge color="green">Available</Badge>}
                           </div>
                           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
                             {unavailable ? (
                               <span className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-2 py-1 font-semibold text-red-600">
                                 <AlertCircle className="h-4 w-4" />
-                                No seats available
+                                {t.isExpired ? "Departure passed" : "No seats available"}
                               </span>
                             ) : t.canShare ? (
                               <span
@@ -131,19 +135,19 @@ export default function TripResults({ trips }: { trips: TripDTO[] }) {
                                 }`}
                               >
                                 <Users className="h-4 w-4" />
-                                {`${seatsLeft} shared seat${seatsLeft > 1 ? "s" : ""} left${
+                                {`${seatsLeft} seat${seatsLeft > 1 ? "s" : ""} left${
                                   seatsLeft <= 2 ? " - hurry!" : ""
                                 }`}
                               </span>
                             ) : (
                               <span className="flex items-center gap-1 font-semibold text-amber-600">
                                 <Users className="h-4 w-4" />
-                                Shared full - private car available
+                                Seats full - private car available
                               </span>
                             )}
                             <span className="flex items-center gap-1">
                               <ShieldCheck className="h-4 w-4" />
-                              Driver details after booking
+                              Shared seats are pooled for this trip
                             </span>
                           </div>
                         </div>
@@ -162,7 +166,7 @@ export default function TripResults({ trips }: { trips: TripDTO[] }) {
                         </div>
                         {unavailable ? (
                           <Button disabled variant="outline">
-                            Sold out
+                            {t.isExpired ? "Departed" : "Sold out"}
                           </Button>
                         ) : (
                           <Link href={`/book/${t.id}`}>

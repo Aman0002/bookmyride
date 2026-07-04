@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button, Input, Label, Card } from "@/components/ui";
 import { formatINR } from "@/lib/utils";
+import { DEFAULT_SEATS } from "@/lib/constants";
 
 type RideType = "SHARED" | "PRIVATE";
 type PayMode = "ONLINE" | "COD";
@@ -36,6 +37,8 @@ export default function BookingForm({
   canPrivate,
   sharedPrice,
   privatePrice,
+  sharedCapacity,
+  carsTotal,
   defaultName,
   defaultPhone,
 }: {
@@ -45,6 +48,8 @@ export default function BookingForm({
   canPrivate: boolean;
   sharedPrice: number;
   privatePrice: number;
+  sharedCapacity: number;
+  carsTotal: number;
   defaultName: string;
   defaultPhone: string;
 }) {
@@ -239,7 +244,7 @@ export default function BookingForm({
           } ${!canShare ? "cursor-not-allowed opacity-50" : ""}`}
         >
           <Users className="h-5 w-5 text-brand-700" />
-          <div className="mt-2 font-semibold text-slate-900">Shared seat</div>
+          <div className="mt-2 font-semibold text-slate-900">Shared ride</div>
           <div className="text-sm text-slate-500">
             {canShare ? `${formatINR(sharedPrice)}/seat` : "Sold out"}
           </div>
@@ -255,7 +260,7 @@ export default function BookingForm({
           } ${!canPrivate ? "cursor-not-allowed opacity-50" : ""}`}
         >
           <Car className="h-5 w-5 text-brand-700" />
-          <div className="mt-2 font-semibold text-slate-900">Private car</div>
+          <div className="mt-2 font-semibold text-slate-900">Book the whole car</div>
           <div className="text-sm text-slate-500">
             {canPrivate ? `${formatINR(privatePrice)} total` : "Not available"}
           </div>
@@ -264,8 +269,16 @@ export default function BookingForm({
 
       {type === "SHARED" && (
         <div className="mt-4">
-          <Label>Number of seats</Label>
-          <div className="flex items-center gap-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+            <div className="font-semibold text-slate-900">
+              {seatsLeft} seat{seatsLeft === 1 ? "" : "s"} left
+            </div>
+            <div className="mt-1">
+              Seats for this departure are still available. You can book one or more seats for the same trip.
+            </div>
+          </div>
+          <Label className="mt-4">Number of seats</Label>
+          <div className="mt-2 flex items-center gap-2">
             {Array.from({ length: maxSeats }, (_, i) => i + 1).map((n) => (
               <button
                 key={n}

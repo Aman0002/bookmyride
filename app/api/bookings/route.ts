@@ -5,7 +5,7 @@ import { getSession } from "@/lib/session";
 import { validatePickup } from "@/lib/pickup";
 import { createOrder } from "@/lib/razorpay";
 import { confirmAndNotify } from "@/lib/booking";
-import { recomputeTripStatus, computeAvailability } from "@/lib/trips";
+import { recomputeTripStatus, computeAvailability, isTripExpired } from "@/lib/trips";
 import { DEFAULT_SEATS } from "@/lib/constants";
 
 const schema = z.object({
@@ -36,6 +36,13 @@ export async function POST(req: NextRequest) {
   const trip = await prisma.trip.findUnique({ where: { id: d.tripId } });
   if (!trip || trip.status === "CANCELLED") {
     return NextResponse.json({ error: "This trip is not available." }, { status: 400 });
+  }
+
+  if (isTripExpired(trip)) {
+    return NextResponse.json(
+      { error: "This departure has already passed and is no longer accepting bookings." },
+      { status: 400 }
+    );
   }
 
   // Re-validate pickup server-side (never trust the client).

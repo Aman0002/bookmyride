@@ -60,7 +60,28 @@ export type Availability = {
   sharedCapacity: number;
   canShare: boolean;
   canPrivate: boolean;
+  isExpired: boolean;
 };
+
+function parseTripDateTime(date: Date | string, hhmm: string) {
+  const base = new Date(typeof date === "string" ? date : date);
+  const [hours = 0, minutes = 0] = hhmm.split(":").map(Number);
+  base.setHours(hours, minutes, 0, 0);
+  return base;
+}
+
+export function isTripExpired(trip: {
+  date: Date | string;
+  departureTime: string;
+  departureEndTime?: string | null;
+}) {
+  const tripDate = toDateOnly(trip.date);
+  const tripStart = parseTripDateTime(tripDate, trip.departureTime);
+  const tripEnd = trip.departureEndTime?.trim()
+    ? parseTripDateTime(tripDate, trip.departureEndTime)
+    : tripStart;
+  return new Date() > tripEnd;
+}
 
 // Pooled availability: private bookings each reserve a whole car, shrinking the
 // shared pool. A new private booking is only allowed if the already-booked
@@ -70,10 +91,29 @@ export function computeAvailability(trip: {
   seatsBooked: number;
   privateCarsBooked: number;
   status: string;
+  date?: Date | string;
+  departureTime?: string;
+  departureEndTime?: string | null;
 }): Availability {
-  if (trip.status === "CANCELLED") {
-    return { sharedSeatsLeft: 0, sharedCapacity: 0, canShare: false, canPrivate: false };
+  const expired =
+    trip.date && trip.departureTime
+      ? isTripExpired({
+          date: trip.date,
+          departureTime: trip.departureTime,
+          departureEndTime: trip.departureEndTime,
+        })
+      : false;
+
+  if (trip.status === "CANCELLED" || expired) {
+    return {
+      sharedSeatsLeft: 0,
+      sharedCapacity: 0,
+      canShare: false,
+      canPrivate: false,
+      isExpired: true,
+    };
   }
+
   const carsForShared = trip.carsTotal - trip.privateCarsBooked;
   const sharedCapacity = carsForShared * SEATS_PER_CAR;
   const sharedSeatsLeft = Math.max(sharedCapacity - trip.seatsBooked, 0);
@@ -81,7 +121,7 @@ export function computeAvailability(trip: {
   const canPrivate =
     trip.privateCarsBooked < trip.carsTotal &&
     trip.seatsBooked <= (trip.carsTotal - trip.privateCarsBooked - 1) * SEATS_PER_CAR;
-  return { sharedSeatsLeft, sharedCapacity, canShare, canPrivate };
+  return { sharedSeatsLeft, sharedCapacity, canShare, canPrivate, isExpired: false };
 }
 
 // Recompute a trip's shared seats, private cars, and OPEN/FULL status.

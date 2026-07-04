@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { Clock, MapPin, ArrowLeft, ShieldCheck, Wallet, Home } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { computeAvailability } from "@/lib/trips";
+import { computeAvailability, isTripExpired } from "@/lib/trips";
 import { Card } from "@/components/ui";
+import { DEFAULT_SEATS } from "@/lib/constants";
 import AuthPanel from "@/components/AuthPanel";
 import BookingForm from "@/components/BookingForm";
 import { formatDate, formatTimeWindow, formatINR, toDateInput } from "@/lib/utils";
@@ -23,8 +24,8 @@ export default async function BookPage({
 
   const user = await getCurrentUser();
   const avail = computeAvailability(trip);
-  const unavailable =
-    trip.status === "FULL" || (!avail.canShare && !avail.canPrivate);
+  const expired = isTripExpired(trip);
+  const unavailable = expired || trip.status === "FULL" || (!avail.canShare && !avail.canPrivate);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -72,7 +73,9 @@ export default async function BookPage({
 
       {unavailable ? (
         <Card className="mt-6 p-8 text-center text-slate-600">
-          Sorry, this departure is no longer available. Please choose another.
+          {expired
+            ? "This departure has already passed. Please choose another trip."
+            : "Sorry, this departure is no longer available. Please choose another."}
         </Card>
       ) : !user ? (
         <Card className="mt-6 p-6">
@@ -87,16 +90,28 @@ export default async function BookPage({
           </div>
         </Card>
       ) : (
-        <BookingForm
-          tripId={trip.id}
-          seatsLeft={avail.sharedSeatsLeft}
-          canShare={avail.canShare}
-          canPrivate={avail.canPrivate}
-          sharedPrice={trip.sharedSeatPrice}
-          privatePrice={trip.privatePrice}
-          defaultName={user.name ?? ""}
-          defaultPhone={user.phone ?? ""}
-        />
+        <>
+          <Card className="mt-6 border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            <div className="font-semibold text-slate-900">
+              Seats are pooled for this trip.
+            </div>
+            <div className="mt-1">
+              You can book a seat for this departure, and the remaining seats are shared across the available cars. Right now there are {avail.sharedSeatsLeft} left.
+            </div>
+          </Card>
+          <BookingForm
+            tripId={trip.id}
+            seatsLeft={avail.sharedSeatsLeft}
+            canShare={avail.canShare}
+            canPrivate={avail.canPrivate}
+            sharedPrice={trip.sharedSeatPrice}
+            privatePrice={trip.privatePrice}
+            sharedCapacity={trip.carsTotal * DEFAULT_SEATS}
+            carsTotal={trip.carsTotal}
+            defaultName={user.name ?? ""}
+            defaultPhone={user.phone ?? ""}
+          />
+        </>
       )}
     </div>
   );
