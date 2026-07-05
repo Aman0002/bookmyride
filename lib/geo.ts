@@ -27,45 +27,46 @@ export type GeocodeResult = {
   approximate: boolean;
 };
 
-// Geocode an address to coordinates. Uses Google Geocoding when a server key is
-// configured, otherwise a dev fallback that only recognizes Hisar-area text.
+// Geocode an address to coordinates using Nominatim (OpenStreetMap) when available.
+// Falls back to a simple Hisar-area heuristic when the service is unavailable.
 export async function geocodeAddress(
   address: string
 ): Promise<GeocodeResult | null> {
-  const key = process.env.GOOGLE_MAPS_SERVER_KEY;
-  if (key) {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-      address
-    )}&region=in&key=${key}`;
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.status === "OK" && data.results?.[0]) {
-        const r = data.results[0];
-        return {
-          lat: r.geometry.location.lat,
-          lng: r.geometry.location.lng,
-          formattedAddress: r.formatted_address,
-          approximate: false,
-        };
-      }
-      return null;
-    } catch {
-      return null;
+  const text = address.trim();
+  if (!text) return null;
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&countrycodes=in&q=${encodeURIComponent(text)}`;
+    const res = await fetch(url, {
+      headers: {
+        "Accept-Language": "en",
+        "User-Agent": "BookMyRide/1.0",
+      },
+    });
+    const data = await res.json();
+    const first = Array.isArray(data) ? data[0] : null;
+    if (first?.lat && first?.lon) {
+      return {
+        lat: Number(first.lat),
+        lng: Number(first.lon),
+        formattedAddress: first.display_name || text,
+        approximate: false,
+      };
     }
+  } catch {
+    // Fall through to the heuristic fallback below.
   }
 
-  // Dev fallback (no API key): recognize Hisar-area addresses only.
-  const text = address.toLowerCase();
+  // Dev fallback: recognize Hisar-area addresses only.
+  const lower = text.toLowerCase();
   const hisarHints = ["hisar", "hissar", "hisar,"];
-  if (hisarHints.some((h) => text.includes(h))) {
-    // Small deterministic jitter so distinct addresses aren't identical.
-    const seed = Array.from(address).reduce((s, c) => s + c.charCodeAt(0), 0);
+  if (hisarHints.some((h) => lower.includes(h))) {
+    const seed = Array.from(text).reduce((s, c) => s + c.charCodeAt(0), 0);
     const jitter = ((seed % 60) - 30) / 1000; // ~ +-3km
     return {
       lat: HISAR_CENTER.lat + jitter,
       lng: HISAR_CENTER.lng + jitter,
-      formattedAddress: address,
+      formattedAddress: text,
       approximate: true,
     };
   }

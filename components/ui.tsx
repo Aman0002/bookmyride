@@ -36,20 +36,24 @@ export function Button({
   );
 }
 
-export function Input({
-  className,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      className={cn(
-        "h-11 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100",
-        className
-      )}
-      {...props}
-    />
-  );
-}
+const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  ({ className, ...props }, ref) => {
+    return (
+      <input
+        ref={ref}
+        className={cn(
+          "h-11 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100",
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+);
+
+Input.displayName = "Input";
+
+export { Input };
 
 export function Select({
   className,

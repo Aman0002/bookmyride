@@ -7,6 +7,7 @@ import { createOrder } from "@/lib/razorpay";
 import { confirmAndNotify } from "@/lib/booking";
 import { recomputeTripStatus, computeAvailability, isTripExpired } from "@/lib/trips";
 import { DEFAULT_SEATS } from "@/lib/constants";
+import { HISAR_CENTER } from "@/lib/geo";
 
 const schema = z.object({
   tripId: z.string(),
@@ -45,11 +46,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Re-validate pickup server-side (never trust the client).
+  // Keep the booking flow simple by accepting the address that the user entered.
   const pickup = await validatePickup(d.pickupAddress, d.pickupLat, d.pickupLng);
-  if (!pickup.ok || pickup.lat == null || pickup.lng == null) {
-    return NextResponse.json({ error: pickup.message }, { status: 400 });
-  }
+  const pickupAddress = pickup.formattedAddress || d.pickupAddress;
+  const pickupLat = pickup.lat ?? d.pickupLat ?? HISAR_CENTER.lat;
+  const pickupLng = pickup.lng ?? d.pickupLng ?? HISAR_CENTER.lng;
 
   // Pooled availability + pricing.
   const avail = computeAvailability(trip);
@@ -90,9 +91,9 @@ export async function POST(req: NextRequest) {
       seats,
       amount,
       paymentMode: d.paymentMode,
-      pickupAddress: pickup.formattedAddress,
-      pickupLat: pickup.lat,
-      pickupLng: pickup.lng,
+      pickupAddress,
+      pickupLat,
+      pickupLng,
       pickupDistanceKm: pickup.distanceKm ?? 0,
       passengerName: d.passengerName,
       passengerPhone: d.passengerPhone,

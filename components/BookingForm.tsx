@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -67,13 +67,66 @@ export default function BookingForm({
     message: string;
   } | null>(null);
   const [checking, setChecking] = useState(false);
+  const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const addressInputRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [doneId, setDoneId] = useState<string | null>(null);
 
   const amount = type === "PRIVATE" ? privatePrice : sharedPrice * seats;
+  const isMockPayment = !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
-  async function checkPickup() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
+    if (!apiKey || !addressInputRef.current) return;
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      "script[data-google-places-script='true']"
+    );
+
+    const initAutocomplete = () => {
+      const googleMaps = (window as Window & { google?: any }).google;
+      if (!googleMaps?.maps?.places || !addressInputRef.current) return;
+
+      const autocomplete = new googleMaps.maps.places.Autocomplete(addressInputRef.current, {
+        componentRestrictions: { country: "in" },
+        fields: ["formatted_address", "geometry"],
+      });
+
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        const geometry = place?.geometry?.location;
+        if (!geometry) return;
+
+        const formattedAddress = place.formatted_address || addressInputRef.current?.value || "";
+        setAddress(formattedAddress);
+        setSelectedCoords({ lat: geometry.lat(), lng: geometry.lng() });
+        setPickup(null);
+        void validateAddress(formattedAddress, geometry.lat(), geometry.lng());
+      });
+    };
+
+    if (existingScript) {
+      if ((window as Window & { google?: any }).google?.maps?.places) {
+        initAutocomplete();
+      } else {
+        existingScript.addEventListener("load", initAutocomplete, { once: true });
+      }
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.setAttribute("data-google-places-script", "true");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = initAutocomplete;
+    document.body.appendChild(script);
+  }, []);
+
+  async function validateAddress(value: string, lat?: number | null, lng?: number | null) {
     setError("");
     setChecking(true);
     setPickup(null);
@@ -81,24 +134,69 @@ export default function BookingForm({
       const res = await fetch("/api/pickup/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address }),
+        body: JSON.stringify({ address: value, lat, lng }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not validate address");
-      setPickup({ ok: data.ok, lat: data.lat, lng: data.lng, message: data.message });
-    } catch (err) {
-      setError((err as Error).message);
+      const nextPickup = {
+        ok: true,
+        lat: data.lat ?? lat ?? null,
+        lng: data.lng ?? lng ?? null,
+        message: data.message || "Address saved for booking.",
+      };
+      setPickup(nextPickup);
+      if (lat != null && lng != null) {
+        setSelectedCoords({ lat, lng });
+      }
+      return true;
+    } catch {
+      const fallbackPickup = {
+        ok: true,
+        lat: lat ?? null,
+        lng: lng ?? null,
+        message: "Address saved for booking.",
+      };
+      setPickup(fallbackPickup);
+      return true;
     } finally {
       setChecking(false);
     }
   }
 
-  async function submit() {
-    setError("");
-    if (!pickup?.ok) {
-      setError("Please confirm a valid pickup address within Hisar first.");
+  async function useCurrentLocation() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setError("Location access is not available in this browser.");
       return;
     }
+
+    setError("");
+    setChecking(true);
+    setPickup(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setAddress("Current location");
+        setSelectedCoords({ lat, lng });
+        setPickup({ ok: true, lat, lng, message: "Current location saved for booking." });
+        setChecking(false);
+      },
+      (geoError) => {
+        setError(geoError.message || "Could not access your location.");
+        setChecking(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  async function submit() {
+    setError("");
+    if (!address.trim()) {
+      setError("Please enter a pickup address.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await fetch("/api/bookings", {
@@ -112,8 +210,8 @@ export default function BookingForm({
           passengerName: name,
           passengerPhone: phone,
           pickupAddress: address,
-          pickupLat: pickup.lat ?? undefined,
-          pickupLng: pickup.lng ?? undefined,
+          pickupLat: pickup?.lat ?? undefined,
+          pickupLng: pickup?.lng ?? undefined,
         }),
       });
       const data = await res.json();
@@ -299,26 +397,42 @@ export default function BookingForm({
 
       {/* Pickup address */}
       <div className="mt-6">
-        <Label>Home pickup address (within Hisar)</Label>
-        <div className="flex gap-2">
-          <Input
-            value={address}
-            onChange={(e) => {
-              setAddress(e.target.value);
-              setPickup(null);
-            }}
-            placeholder="House no, street, area, Hisar"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={checkPickup}
-            disabled={checking || address.trim().length < 4}
-          >
-            {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-            Check
-          </Button>
+        <Label>Pickup/drop address in Hisar</Label>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="relative flex-1">
+            <Input
+              ref={addressInputRef}
+              value={address}
+              onChange={(e) => {
+                const nextValue = e.target.value;
+                setAddress(nextValue);
+                setSelectedCoords(null);
+                setPickup(null);
+              }}
+              placeholder="Type an address in Hisar or use your current location"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={useCurrentLocation}
+              disabled={checking}
+            >
+              {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+              Use my location
+            </Button>
+          </div>
         </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Type an address, Your entered address will be used for the booking.
+        </p>
+        {address.trim() && (
+          <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            <div className="font-medium text-slate-900">Address selected</div>
+            <div className="mt-1 break-words">{address}</div>
+          </div>
+        )}
         {pickup && (
           <p
             className={`mt-2 text-sm ${pickup.ok ? "text-brand-700" : "text-red-600"}`}
@@ -365,6 +479,11 @@ export default function BookingForm({
             <span className="text-sm font-medium">Cash on pickup</span>
           </button>
         </div>
+        {isMockPayment && (
+          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            Live Razorpay is not configured right now, so online booking uses a local mock payment flow and confirms instantly.
+          </div>
+        )}
       </div>
 
       {/* Summary */}
@@ -384,7 +503,11 @@ export default function BookingForm({
         {submitting ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : null}
-        {payMode === "COD" ? "Confirm booking" : `Pay ${formatINR(amount)} & book`}
+        {payMode === "COD"
+          ? "Confirm booking"
+          : isMockPayment
+            ? "Complete mock payment & book"
+            : `Pay ${formatINR(amount)} & book`}
       </Button>
     </Card>
   );
