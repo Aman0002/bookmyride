@@ -13,7 +13,7 @@ const schema = z.object({
   tripId: z.string(),
   type: z.enum(["SHARED", "PRIVATE"]),
   seats: z.number().int().min(1).max(10).default(1),
-  paymentMode: z.enum(["ONLINE", "COD"]),
+  paymentMode: z.enum(["COD"]),
   passengerName: z.string().trim().min(1),
   passengerPhone: z.string().trim().min(6),
   pickupAddress: z.string().trim().min(4),
@@ -109,27 +109,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, bookingId: booking.id, confirmed: true });
   }
 
-  // ONLINE: create payment + Razorpay order.
-  const order = await createOrder(amount, booking.id.slice(-12));
-  await prisma.payment.create({
-    data: {
-      bookingId: booking.id,
-      razorpayOrderId: order.orderId,
-      amount,
-      status: "CREATED",
-    },
-  });
-
   return NextResponse.json({
     ok: true,
     bookingId: booking.id,
-    confirmed: false,
-    payment: {
-      orderId: order.orderId,
-      amount: order.amount,
-      currency: order.currency,
-      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
-      mock: order.mock,
-    },
+    confirmed: true,
   });
 }

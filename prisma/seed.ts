@@ -19,16 +19,14 @@ async function main() {
   }
 
   // The 4 daily departures. Each is a time window with 3 cars pooled.
-  const SHARED_PRICE = 600;
-  const PRIVATE_PRICE = 2400;
   const CARS_PER_DEPARTURE = 3;
   const SEATS_PER_CAR = 4;
 
   const departures = [
-    { origin: "Hisar", destination: "Chandigarh", start: "07:00", end: "08:00" },
-    { origin: "Chandigarh", destination: "Hisar", start: "12:30", end: "13:30" },
-    { origin: "Hisar", destination: "Delhi (Peeragarhi)", start: "16:00", end: "17:00" },
-    { origin: "Delhi (Peeragarhi)", destination: "Hisar", start: "19:30", end: "20:30" },
+    { origin: "Hisar", destination: "Chandigarh", start: "05:00", end: "06:00", sharedPrice: 600, privatePrice: 4000 },
+    { origin: "Chandigarh", destination: "Hisar", start: "12:30", end: "13:30", sharedPrice: 600, privatePrice: 4000 },
+    { origin: "Hisar", destination: "Delhi", start: "17:00", end: "18:00", sharedPrice: 450, privatePrice: 3000 },
+    { origin: "Delhi", destination: "Hisar", start: "19:30", end: "20:30", sharedPrice: 450, privatePrice: 3000 },
   ];
 
   // Upsert the current routes.
@@ -85,8 +83,8 @@ async function main() {
         routeId: route.id,
         departureTime: d.start,
         departureEndTime: d.end,
-        sharedSeatPrice: SHARED_PRICE,
-        privatePrice: PRIVATE_PRICE,
+        sharedSeatPrice: d.sharedPrice,
+        privatePrice: d.privatePrice,
         carsCount: CARS_PER_DEPARTURE,
         seatsPerTrip: CARS_PER_DEPARTURE * SEATS_PER_CAR,
       },

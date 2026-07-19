@@ -3,19 +3,18 @@
 A cab booking website for fixed routes out of **Hisar**, with the core promise:
 **we pick you up from home.** Customers book a private car or shared seats on a
 fixed daily departure, enter a home pickup address (validated within the Hisar
-service area), verify by email OTP, and pay **online (Razorpay)** or by
-**cash on pickup (COD)**. Everyone gets an email confirmation, and there's an
+service area), verify by email OTP, and pay **cash on pickup (COD)**. Everyone gets an email confirmation, and there's an
 admin dashboard to run the business.
 
 ## Features
 
 - Attractive, mobile-first landing page with route search
-- 3 seeded routes: Hisar → Chandigarh, Peeragarhi (Delhi), Delhi IGI Airport
-- Private car (₹4000) and shared seat (₹500/seat) bookings
-- **Home pickup** with Google Maps address check, rejected if outside the
+- 2 seeded routes: Hisar → Chandigarh, Delhi
+- Private car ₹4,000 to Chandigarh or ₹3,000 to Delhi, and shared seat ₹600/seat to Chandigarh or ₹450/seat to Delhi
+- **Home pickup** with address validation, rejected if outside the
   Hisar radius (default 10 km, editable in admin)
 - Passwordless **email OTP** login
-- **Online payment (Razorpay)** and **Cash on pickup (COD)**
+- **Cash on pickup (COD)** payment
 - Automatic **seat tracking** (trip marks full / private-booked automatically)
 - **Booking history** for logged-in users (upcoming + past)
 - **Confirmation emails** with route, date, time, pickup and amount
@@ -27,7 +26,7 @@ admin dashboard to run the business.
 - Next.js 16 (App Router) + TypeScript
 - Prisma ORM + **PostgreSQL** (Neon/Supabase — works locally and on serverless)
 - Tailwind CSS v4
-- Razorpay (payments), Google Maps (geocoding), Nodemailer (email), jose (auth)
+- Nodemailer (email), jose (auth)
 
 ## Getting started
 

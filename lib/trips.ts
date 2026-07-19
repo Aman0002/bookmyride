@@ -14,45 +14,56 @@ export async function ensureTripsForDate(routeId: string, date: Date) {
     where: { routeId, active: true },
   });
 
-  for (const s of schedules) {
-    const days = s.daysOfWeek.split(",").map((d) => Number(d.trim()));
-    if (!days.includes(weekday)) continue;
+  const matchingSchedules = schedules.filter((schedule) => {
+    const days = schedule.daysOfWeek.split(",").map((d) => Number(d.trim()));
+    return days.includes(weekday);
+  });
 
-    const existing = await prisma.trip.findUnique({
+  const validTimes = new Set<string>();
+  for (const schedule of matchingSchedules) {
+    validTimes.add(schedule.departureTime);
+
+    const carsTotal = schedule.carsCount > 0 ? schedule.carsCount : 1;
+    await prisma.trip.upsert({
       where: {
         routeId_date_departureTime: {
           routeId,
           date: day,
-          departureTime: s.departureTime,
+          departureTime: schedule.departureTime,
         },
       },
+      update: {
+        scheduleId: schedule.id,
+        departureEndTime: schedule.departureEndTime,
+        carsTotal,
+        seatsTotal: carsTotal * SEATS_PER_CAR,
+        sharedSeatPrice: schedule.sharedSeatPrice,
+        privatePrice: schedule.privatePrice,
+      },
+      create: {
+        scheduleId: schedule.id,
+        routeId,
+        date: day,
+        departureTime: schedule.departureTime,
+        departureEndTime: schedule.departureEndTime,
+        carsTotal,
+        seatsTotal: carsTotal * SEATS_PER_CAR,
+        seatsBooked: 0,
+        privateCarsBooked: 0,
+        sharedSeatPrice: schedule.sharedSeatPrice,
+        privatePrice: schedule.privatePrice,
+        status: "OPEN",
+      },
     });
-    if (!existing) {
-      const carsTotal = s.carsCount > 0 ? s.carsCount : 1;
-      await prisma.trip.create({
-        data: {
-          scheduleId: s.id,
-          routeId,
-          date: day,
-          departureTime: s.departureTime,
-          departureEndTime: s.departureEndTime,
-          carsTotal,
-          seatsTotal: carsTotal * SEATS_PER_CAR,
-          seatsBooked: 0,
-          privateCarsBooked: 0,
-          sharedSeatPrice: s.sharedSeatPrice,
-          privatePrice: s.privatePrice,
-          status: "OPEN",
-        },
-      });
-    }
   }
 
-  return prisma.trip.findMany({
+  const trips = await prisma.trip.findMany({
     where: { routeId, date: day, status: { not: "CANCELLED" } },
     orderBy: { departureTime: "asc" },
     include: { route: true },
   });
+
+  return trips.filter((trip) => validTimes.has(trip.departureTime));
 }
 
 export type Availability = {

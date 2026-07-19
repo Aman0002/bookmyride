@@ -14,7 +14,7 @@ const faqs = [
   },
   {
     q: "Can I pay cash instead of online?",
-    a: "Yes. At checkout you can choose Cash on Pickup (COD) and pay the driver directly, or pay securely online.",
+    a: "Yes. For now, bookings are accepted for cash on pickup only.",
   },
   {
     q: "What is the difference between shared and private?",

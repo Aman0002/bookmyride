@@ -43,7 +43,7 @@ export default function RefundsPage() {
           <h2 className="text-lg font-semibold text-slate-900">Cancellations by us</h2>
           <p>
             If we cancel a ride (for example, due to unforeseen circumstances),
-            you receive a full refund for any online payment.
+            you are not charged.
           </p>
         </section>
         <section>

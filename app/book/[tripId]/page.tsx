@@ -58,7 +58,7 @@ export default async function BookPage({
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
         {[
           { icon: Home, label: "Home pickup" },
-          { icon: Wallet, label: "Online or cash" },
+          { icon: Wallet, label: "Cash on pickup" },
           { icon: ShieldCheck, label: "OTP verified" },
         ].map((b) => (
           <div

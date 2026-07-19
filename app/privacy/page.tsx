@@ -38,7 +38,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold text-slate-900">Payments</h2>
           <p>
-            Online payments are processed by our payment partner. We do not
+            Payments are collected at pickup. We do not
             store your card or UPI credentials on our servers.
           </p>
         </section>

@@ -1,7 +1,7 @@
 export const BOOKING_TYPES = ["SHARED", "PRIVATE"] as const;
 export type BookingType = (typeof BOOKING_TYPES)[number];
 
-export const PAYMENT_MODES = ["ONLINE", "COD"] as const;
+export const PAYMENT_MODES = ["COD"] as const;
 export type PaymentMode = (typeof PAYMENT_MODES)[number];
 
 export const BOOKING_STATUSES = ["PENDING", "CONFIRMED", "CANCELLED"] as const;

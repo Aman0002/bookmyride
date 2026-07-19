@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Clock, MapPin, Wallet, CreditCard, Car as CarIcon, Phone, User, Fuel } from "lucide-react";
+import { Clock, MapPin, Wallet, Car as CarIcon, Phone, User, Fuel } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { Badge, Button, Card } from "@/components/ui";
@@ -64,15 +64,9 @@ export default async function AccountPage() {
             {formatINR(b.amount)}
           </div>
           <div className="mt-1 flex items-center justify-end gap-1 text-xs text-slate-500">
-            {b.paymentMode === "COD" ? (
-              <>
-                <Wallet className="h-3.5 w-3.5" /> Cash on pickup
-              </>
-            ) : (
-              <>
-                <CreditCard className="h-3.5 w-3.5" /> Paid online
-              </>
-            )}
+            <>
+              <Wallet className="h-3.5 w-3.5" /> Cash on pickup
+            </>
           </div>
           <div className="mt-1 text-xs text-slate-400">
             #{b.id.slice(-8).toUpperCase()}
@@ -82,35 +76,20 @@ export default async function AccountPage() {
       {b.status === "CONFIRMED" && b.car && (
         <div className="mt-3 rounded-xl border border-brand-100 bg-brand-50 p-3">
           <div className="text-xs font-semibold uppercase tracking-wide text-brand-700">
-            Your driver & car
+            Your ride details
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-slate-700">
             <span className="flex items-center gap-1.5">
               <CarIcon className="h-4 w-4 text-brand-600" />
-              {b.car.name}
-              {b.car.plateNumber ? ` · ${b.car.plateNumber}` : ""}
+              Maruti Baleno booked · CNG + Petrol · 2026 model
             </span>
-            {b.car.fuelType && (
-              <span className="flex items-center gap-1.5">
-                <Fuel className="h-4 w-4 text-brand-600" />
-                {b.car.fuelType}
-              </span>
-            )}
-            {b.car.driverName && (
-              <span className="flex items-center gap-1.5">
-                <User className="h-4 w-4 text-brand-600" />
-                {b.car.driverName}
-              </span>
-            )}
-            {b.car.driverPhone && (
-              <a
-                href={`tel:${b.car.driverPhone.replace(/\s/g, "")}`}
-                className="flex items-center gap-1.5 font-medium text-brand-700 hover:underline"
-              >
-                <Phone className="h-4 w-4" />
-                {b.car.driverPhone}
-              </a>
-            )}
+            <a
+              href="tel:7494899239"
+              className="flex items-center gap-1.5 font-medium text-brand-700 hover:underline"
+            >
+              <Phone className="h-4 w-4" />
+              74948 99239
+            </a>
           </div>
         </div>
       )}

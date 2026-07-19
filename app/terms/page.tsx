@@ -31,15 +31,15 @@ export default function TermsPage() {
           <h2 className="text-lg font-semibold text-slate-900">3. Fares & payment</h2>
           <p>
             Fares are shown before you confirm. Shared rides are priced per seat
-            and private rides reserve the whole vehicle. You may pay online or
-            by cash on pickup (COD). For COD, please keep the exact fare ready.
+            and private rides reserve the whole vehicle. You pay in cash at
+            pickup with the driver. Please keep the exact fare ready.
           </p>
         </section>
         <section>
           <h2 className="text-lg font-semibold text-slate-900">4. Cancellations</h2>
           <p>
             You may cancel an upcoming booking from your account. Refund
-            eligibility for online payments is described in our Refund &
+            eligibility is described in our Refund &
             Cancellation policy.
           </p>
         </section>

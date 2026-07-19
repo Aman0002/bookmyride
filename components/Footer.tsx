@@ -37,7 +37,7 @@ export default function Footer() {
             </div>
             <p className="mt-3 text-sm text-slate-500">{BRAND.tagline}</p>
             <p className="mt-3 text-sm text-slate-500">
-              Hisar → Chandigarh · Peeragarhi · Delhi IGI Airport
+              Hisar → Chandigarh · Delhi
             </p>
           </div>
 

@@ -91,16 +91,12 @@ export function bookingConfirmationEmail(input: {
     ["Ride type", input.type === "PRIVATE" ? "Private car" : `Shared (${input.seats} seat${input.seats > 1 ? "s" : ""})`],
     ["Pickup", input.pickupAddress],
     ["Amount", `₹${input.amount}`],
-    ["Payment", input.paymentMode === "COD" ? "Cash on pickup (COD)" : "Paid online"],
+    ["Payment", "Cash on pickup (COD)"],
   ];
-  if (input.carName)
-    rows.push(["Car", `${input.carName}${input.carPlate ? ` (${input.carPlate})` : ""}`]);
-  if (input.carFuel)
-    rows.push(["Fuel", input.carFuel]);
-  if (input.driverName)
-    rows.push(["Driver", input.driverName]);
-  if (input.driverPhone)
-    rows.push(["Driver phone", input.driverPhone]);
+  rows.push(["Car", "Maruti Baleno booked"]);
+  rows.push(["Fuel", "CNG + Petrol"]);
+  rows.push(["Model", "2026 model"]);
+  rows.push(["Phone", "74948 99239"]);
   const table = rows
     .map(
       ([k, v]) =>

@@ -26,8 +26,15 @@ function routeImage(origin: string, destination: string) {
   const key = (origin === "Hisar" ? destination : origin).toLowerCase();
   if (key.includes("chandigarh")) return "/images/route-chandigarh.jpg";
   if (key.includes("igi") || key.includes("airport")) return "/images/route-igi.jpg";
-  if (key.includes("delhi") || key.includes("peeragarhi")) return "/images/route-delhi.jpg";
+  if (key.includes("delhi")) return "/images/route-delhi.jpg";
   return "/images/route-delhi.jpg";
+}
+
+function routeSharedPrice(destination: string) {
+  const key = destination.toLowerCase();
+  if (key.includes("delhi")) return 450;
+  if (key.includes("chandigarh")) return 600;
+  return DEFAULT_SHARED_PRICE;
 }
 
 export default async function HomePage() {
@@ -61,7 +68,7 @@ export default async function HomePage() {
 
   const features = [
     { icon: Home, title: "Doorstep pickup", desc: "We pick you up from home, anywhere within Hisar." },
-    { icon: Wallet, title: "Pay your way", desc: "Pay online securely or choose cash on pickup (COD)." },
+    { icon: Wallet, title: "Cash pickup", desc: "Book with cash on pickup for now." },
     { icon: ShieldCheck, title: "Verified booking", desc: "Email OTP confirmation and instant ride details." },
     { icon: Clock, title: "Fixed schedules", desc: "Reliable departure times you can plan around." },
   ];
@@ -100,9 +107,8 @@ export default async function HomePage() {
             </MountFade>
             <MountFade delay={0.2}>
               <p className="mt-4 max-w-xl text-base text-slate-700 sm:text-lg">
-                Comfortable cabs to Chandigarh and Delhi (Peeragarhi) - and back.
-                Private car {formatINR(DEFAULT_PRIVATE_PRICE)} or shared seat{" "}
-                {formatINR(DEFAULT_SHARED_PRICE)}/seat. Doorstep pickup, online or cash.
+                Comfortable cabs to Chandigarh and Delhi - and back.
+                Private car ₹4,000 to Chandigarh or ₹3,000 to Delhi, or shared seats for ₹600/seat to Chandigarh and ₹450/seat to Delhi. Doorstep pickup with cash on pickup.
               </p>
             </MountFade>
           </div>
@@ -199,7 +205,7 @@ export default async function HomePage() {
                         <span className="text-sm text-slate-500">
                           From{" "}
                           <span className="font-bold text-slate-900">
-                            {formatINR(DEFAULT_SHARED_PRICE)}
+                            {formatINR(routeSharedPrice(r.destination))}
                           </span>
                           /seat
                         </span>
@@ -292,7 +298,7 @@ export default async function HomePage() {
             <Stagger className="mt-6 space-y-3">
               {[
                 "Free home pickup within Hisar city",
-                "Pay online or with cash on pickup",
+                "Cash on pickup for now",
                 "Instant email confirmation with driver details",
               ].map((t) => (
                 <StaggerItem key={t}>
