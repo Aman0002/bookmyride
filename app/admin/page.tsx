@@ -1,7 +1,7 @@
 import { Clock, MapPin, IndianRupee, Ticket, CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Badge, Button, Card } from "@/components/ui";
-import { formatDate, formatTime12h, formatINR } from "@/lib/utils";
+import { formatDate, formatTime12h, formatINR, getIndiaDateString } from "@/lib/utils";
 import { confirmBooking, cancelBooking } from "./actions";
 
 export default async function AdminDashboard() {
@@ -13,12 +13,14 @@ export default async function AdminDashboard() {
   const now = new Date();
 
   const getTripDateTime = (trip: { date: Date | string; departureTime: string }) => {
-    const base = new Date(trip.date);
+    const source = typeof trip.date === "string" ? new Date(trip.date) : trip.date;
+    const indiaDateStr = getIndiaDateString(source);
+    const [year, month, day] = indiaDateStr.split("-").map(Number);
     const [hours = 0, minutes = 0] = trip.departureTime
       .split(":")
       .map((value) => Number(value));
-    base.setHours(hours, minutes, 0, 0);
-    return base;
+    const indiaOffsetMs = 5.5 * 60 * 60 * 1000;
+    return new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0) - indiaOffsetMs);
   };
 
   const upcomingBookings = bookings.filter((booking) => getTripDateTime(booking.trip) >= now);
@@ -105,8 +107,8 @@ export default async function AdminDashboard() {
                   <div>Passenger phone: {b.passengerPhone}</div>
                 </div>
               </div>
-              <div className="mt-2 truncate text-sm text-slate-500">
-                Pickup: {b.pickupAddress} ({b.pickupDistanceKm} km)
+              <div className="mt-2 break-words text-sm text-slate-500">
+                Pickup: {b.pickupAddress} {b.pickupDistanceKm != null ? `(${b.pickupDistanceKm} km)` : ""}
               </div>
                 </div>
 

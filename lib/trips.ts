@@ -77,8 +77,11 @@ export type Availability = {
 function parseTripDateTime(date: Date | string, hhmm: string) {
   const base = new Date(typeof date === "string" ? date : date);
   const [hours = 0, minutes = 0] = hhmm.split(":").map(Number);
-  base.setHours(hours, minutes, 0, 0);
-  return base;
+  const indiaOffsetMs = 5.5 * 60 * 60 * 1000;
+  return new Date(
+    Date.UTC(base.getFullYear(), base.getMonth(), base.getDate(), hours, minutes, 0, 0) -
+      indiaOffsetMs
+  );
 }
 
 export function isTripExpired(trip: {

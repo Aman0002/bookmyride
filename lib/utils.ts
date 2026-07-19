@@ -37,11 +37,25 @@ export function formatTimeWindow(start: string, end?: string | null) {
   return `${formatTime12h(start)} - ${formatTime12h(end)}`;
 }
 
-// Normalize a date to local midnight (used for trip dates).
+// Normalize a date to midnight in India timezone (used for trip dates).
 export function toDateOnly(input: string | Date): Date {
-  const d = typeof input === "string" ? new Date(input) : new Date(input);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  const source = typeof input === "string" ? new Date(input) : input;
+  // Get the date in India timezone (YYYY-MM-DD format)
+  const indiaDateStr = getIndiaDateString(source);
+  // Create a UTC Date from that string and adjust back to represent the India timezone midnight
+  const [year, month, day] = indiaDateStr.split("-").map(Number);
+  const indiaOffsetMs = 5.5 * 60 * 60 * 1000;
+  return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0) + indiaOffsetMs);
+}
+
+export function getIndiaDateString(date: Date | string = new Date()): string {
+  const source = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(source);
 }
 
 // Format a date as YYYY-MM-DD using local components (avoids UTC off-by-one).

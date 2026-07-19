@@ -1,10 +1,10 @@
 import { ArrowRight, CalendarDays } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { ensureTripsForDate, computeAvailability } from "@/lib/trips";
+import { ensureTripsForDate, computeAvailability, isTripExpired } from "@/lib/trips";
 import { Card } from "@/components/ui";
 import SearchForm from "@/components/SearchForm";
 import TripResults, { type TripDTO } from "@/components/TripResults";
-import { formatDate, toDateOnly } from "@/lib/utils";
+import { formatDate, getIndiaDateString, toDateOnly } from "@/lib/utils";
 
 export default async function SearchPage({
   searchParams,
@@ -24,8 +24,11 @@ export default async function SearchPage({
       : undefined;
   if (!route && routeId) route = routes.find((r) => r.id === routeId);
 
-  const dateStr = date || new Date().toISOString().slice(0, 10);
+  const dateStr = date || getIndiaDateString();
   const searched = Boolean(from && to) || Boolean(routeId);
+
+  const todayStr = getIndiaDateString();
+  const isToday = dateStr === todayStr;
 
   const rawTrips = route
     ? await ensureTripsForDate(route.id, toDateOnly(dateStr))
@@ -33,19 +36,23 @@ export default async function SearchPage({
 
   const trips: TripDTO[] = rawTrips.map((t) => {
     const avail = computeAvailability(t);
+    const expiredByTime = isToday && isTripExpired(t);
+    const effectiveAvailability = expiredByTime
+      ? { ...avail, sharedSeatsLeft: 0, sharedCapacity: 0, canShare: false, canPrivate: false, isExpired: true }
+      : avail;
     return {
       id: t.id,
       departureTime: t.departureTime,
       departureEndTime: t.departureEndTime,
-      sharedSeatsLeft: avail.sharedSeatsLeft,
-      sharedCapacity: avail.sharedCapacity,
-      canShare: avail.canShare,
-      canPrivate: avail.canPrivate,
+      sharedSeatsLeft: effectiveAvailability.sharedSeatsLeft,
+      sharedCapacity: effectiveAvailability.sharedCapacity,
+      canShare: effectiveAvailability.canShare,
+      canPrivate: effectiveAvailability.canPrivate,
       sharedSeatPrice: t.sharedSeatPrice,
       privatePrice: t.privatePrice,
       status: t.status,
       carsTotal: t.carsTotal,
-      isExpired: avail.isExpired,
+      isExpired: effectiveAvailability.isExpired,
     };
   });
 

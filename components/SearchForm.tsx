@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Search, MapPin, Navigation, CalendarDays } from "lucide-react";
 import { Button, Label, Select, Input } from "@/components/ui";
+import { getIndiaDateString } from "@/lib/utils";
 
 type RouteOption = { origin: string; destination: string };
 
@@ -21,7 +22,7 @@ export default function SearchForm({
   compact?: boolean;
 }) {
   const router = useRouter();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getIndiaDateString();
 
   // Sources = places that have at least one route leaving from them.
   const sources = useMemo(

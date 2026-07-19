@@ -46,9 +46,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Keep the booking flow simple by accepting the address that the user entered.
+  // Preserve the exact address the user typed and only use validation for distance checks.
   const pickup = await validatePickup(d.pickupAddress, d.pickupLat, d.pickupLng);
-  const pickupAddress = pickup.formattedAddress || d.pickupAddress;
+  const pickupAddress = d.pickupAddress.trim();
   const pickupLat = pickup.lat ?? d.pickupLat ?? HISAR_CENTER.lat;
   const pickupLng = pickup.lng ?? d.pickupLng ?? HISAR_CENTER.lng;
 
