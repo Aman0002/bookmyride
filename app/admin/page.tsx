@@ -69,50 +69,59 @@ export default async function AdminDashboard() {
         <div className="mt-4 space-y-3">
           {upcomingBookings.map((b) => (
             <Card key={b.id} className="p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 font-semibold text-slate-900">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 font-semibold text-slate-900">
                     <MapPin className="h-4 w-4 text-brand-700" />
-                    {b.trip.route.origin} → {b.trip.route.destination}
+                    <span>
+                      {b.trip.route.origin} → {b.trip.route.destination}
+                    </span>
                     <span className="text-xs font-normal text-slate-400">
                       #{b.id.slice(-8).toUpperCase()}
                     </span>
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
+
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
                     <span>{formatDate(b.trip.date)}</span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
                       {formatTime12h(b.trip.departureTime)}
                     </span>
-                    <span>
-                      {b.type === "PRIVATE"
-                        ? "Private"
-                        : `${b.seats} seat(s)`}
-                    </span>
+                    <span>{b.type === "PRIVATE" ? "Private" : `${b.seats} seat(s)`}</span>
                     <span>{formatINR(b.amount)}</span>
-                    <span>
-                      {b.paymentMode === "COD" ? "COD" : "Online"}
-                    </span>
+                    <span>{b.paymentMode === "COD" ? "COD" : "Online"}</span>
                   </div>
-                  <div className="mt-2 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
-                <div>
-                  <div className="font-medium text-slate-700">User</div>
-                  <div>{b.user.name || "—"}</div>
-                  <div>{b.user.phone || "—"}</div>
-                </div>
-                <div>
-                  <div className="font-medium text-slate-700">Booking</div>
-                  <div>Booked: {new Date(b.createdAt).toLocaleString()}</div>
-                  <div>Passenger: {b.passengerName}</div>
-                  <div>Passenger phone: {b.passengerPhone}</div>
-                </div>
-              </div>
-              <div className="mt-2 break-words text-sm text-slate-500">
-                Pickup: {b.pickupAddress} {b.pickupDistanceKm != null ? `(${b.pickupDistanceKm} km)` : ""}
-              </div>
+
+                  <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                    <div>
+                      <div className="font-medium text-slate-700">Passenger</div>
+                      <div>{b.passengerName || "—"}</div>
+                      <div>{b.passengerPhone || "—"}</div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-slate-700">Booking info</div>
+                      <div>Booked: {new Date(b.createdAt).toLocaleString()}</div>
+                      <div>User: {b.user.name || "—"}</div>
+                      <div>Phone: {b.user.phone || "—"}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Pickup address
+                    </div>
+                    <div className="mt-1 break-words text-sm text-slate-700">
+                      {b.pickupAddress || "—"}
+                    </div>
+                    {b.pickupDistanceKm != null && (
+                      <div className="mt-1 text-xs text-slate-500">
+                        Distance: {b.pickupDistanceKm} km
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                   {b.status === "CONFIRMED" && <Badge color="green">Confirmed</Badge>}
                   {b.status === "PENDING" && <Badge color="amber">Pending</Badge>}
                   {b.status === "CANCELLED" && <Badge color="red">Cancelled</Badge>}
