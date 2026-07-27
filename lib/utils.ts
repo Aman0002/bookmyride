@@ -16,6 +16,7 @@ export function formatINR(amount: number) {
 export function formatDate(date: Date | string) {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -56,6 +57,32 @@ export function getIndiaDateString(date: Date | string = new Date()): string {
     month: "2-digit",
     day: "2-digit",
   }).format(source);
+}
+
+export function formatDateTimeIST(date: Date | string): string {
+  const source = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(source);
+}
+
+export function parseTripDateTimeIST(date: Date | string, hhmm: string): Date {
+  const source = typeof date === "string" ? new Date(date) : date;
+  const indiaDateStr = getIndiaDateString(source);
+  const [year, month, day] = indiaDateStr.split("-").map(Number);
+  const [hours = 0, minutes = 0] = hhmm.split(":").map(Number);
+  const indiaOffsetMs = 5.5 * 60 * 60 * 1000;
+  return new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0) - indiaOffsetMs);
+}
+
+export function formatTripDateTimeIST(date: Date | string, hhmm: string): string {
+  return formatDateTimeIST(parseTripDateTimeIST(date, hhmm));
 }
 
 // Format a date as YYYY-MM-DD using local components (avoids UTC off-by-one).

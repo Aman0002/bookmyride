@@ -1,7 +1,7 @@
 import { Clock, MapPin, IndianRupee, Ticket, CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Badge, Button, Card } from "@/components/ui";
-import { formatDate, formatTime12h, formatINR, getIndiaDateString } from "@/lib/utils";
+import { formatDate, formatTime12h, formatINR, getIndiaDateString, formatDateTimeIST, formatTripDateTimeIST, parseTripDateTimeIST } from "@/lib/utils";
 import { confirmBooking, cancelBooking } from "./actions";
 
 export default async function AdminDashboard() {
@@ -13,14 +13,7 @@ export default async function AdminDashboard() {
   const now = new Date();
 
   const getTripDateTime = (trip: { date: Date | string; departureTime: string }) => {
-    const source = typeof trip.date === "string" ? new Date(trip.date) : trip.date;
-    const indiaDateStr = getIndiaDateString(source);
-    const [year, month, day] = indiaDateStr.split("-").map(Number);
-    const [hours = 0, minutes = 0] = trip.departureTime
-      .split(":")
-      .map((value) => Number(value));
-    const indiaOffsetMs = 5.5 * 60 * 60 * 1000;
-    return new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0) - indiaOffsetMs);
+    return parseTripDateTimeIST(trip.date, trip.departureTime);
   };
 
   const upcomingBookings = bookings.filter((booking) => getTripDateTime(booking.trip) >= now);
@@ -82,10 +75,9 @@ export default async function AdminDashboard() {
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
-                    <span>{formatDate(b.trip.date)}</span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      {formatTime12h(b.trip.departureTime)}
+                      {formatTripDateTimeIST(b.trip.date, b.trip.departureTime)}
                     </span>
                     <span>{b.type === "PRIVATE" ? "Private" : `${b.seats} seat(s)`}</span>
                     <span>{formatINR(b.amount)}</span>
@@ -100,7 +92,7 @@ export default async function AdminDashboard() {
                     </div>
                     <div>
                       <div className="font-medium text-slate-700">Booking info</div>
-                      <div>Booked: {new Date(b.createdAt).toLocaleString()}</div>
+                      <div>Booked: {formatDateTimeIST(b.createdAt)}</div>
                       <div>User: {b.user.name || "—"}</div>
                       <div>Phone: {b.user.phone || "—"}</div>
                     </div>

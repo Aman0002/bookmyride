@@ -32,7 +32,7 @@ function routeImage(origin: string, destination: string) {
 
 function routeSharedPrice(destination: string) {
   const key = destination.toLowerCase();
-  if (key.includes("delhi")) return 450;
+  if (key.includes("delhi")) return 400;
   if (key.includes("chandigarh")) return 600;
   return DEFAULT_SHARED_PRICE;
 }
@@ -108,7 +108,7 @@ export default async function HomePage() {
             <MountFade delay={0.2}>
               <p className="mt-4 max-w-xl text-base text-slate-700 sm:text-lg">
                 Comfortable cabs to Chandigarh and Delhi - and back.
-                Private car ₹4,000 to Chandigarh or ₹3,000 to Delhi, or shared seats for ₹600/seat to Chandigarh and ₹450/seat to Delhi. Doorstep pickup with cash on pickup.
+                Private car ₹2,400 to Chandigarh or ₹2,200 to Delhi, or shared seats for ₹600/seat to Chandigarh and ₹400/seat to Delhi. Doorstep pickup with cash on pickup.
               </p>
             </MountFade>
           </div>
