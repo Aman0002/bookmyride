@@ -6,7 +6,7 @@ import { ChevronDown } from "lucide-react";
 const faqs = [
   {
     q: "How does home pickup work?",
-    a: "Enter your address in Hisar while booking. If it's within our service area (10 km of the city center), our driver picks you up right from your doorstep at the scheduled time.",
+    a: "Enter your address in Hisar while booking. If it's within our service area (10 km of the city center), our driver picks you up right from your doorstep at the scheduled time for the Hisar–Chandigarh route or return trip.",
   },
   {
     q: "What if my address is outside Hisar?",

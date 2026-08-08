@@ -25,17 +25,18 @@ import { DEFAULT_PRIVATE_PRICE, DEFAULT_SHARED_PRICE } from "@/lib/constants";
 function routeImage(origin: string, destination: string) {
   const key = (origin === "Hisar" ? destination : origin).toLowerCase();
   if (key.includes("chandigarh")) return "/images/route-chandigarh.jpg";
-  if (key.includes("igi") || key.includes("airport")) return "/images/route-igi.jpg";
-  if (key.includes("delhi")) return "/images/route-delhi.jpg";
-  return "/images/route-delhi.jpg";
+  return "/images/route-chandigarh.jpg";
 }
 
 function routeSharedPrice(destination: string) {
   const key = destination.toLowerCase();
-  if (key.includes("delhi")) return 400;
   if (key.includes("chandigarh")) return 600;
   return DEFAULT_SHARED_PRICE;
 }
+
+const isChandigarhRoute = (route: { origin: string; destination: string }) =>
+  (route.origin === "Hisar" && route.destination === "Chandigarh") ||
+  (route.origin === "Chandigarh" && route.destination === "Hisar");
 
 export default async function HomePage() {
   const [routes, reviews, ratingAgg, confirmedCount] = await Promise.all([
@@ -52,13 +53,15 @@ export default async function HomePage() {
     prisma.booking.count({ where: { status: "CONFIRMED" } }),
   ]);
 
-  const searchRoutes = await prisma.route.findMany({
+  const searchRoutes = (await prisma.route.findMany({
     where: { active: true },
     orderBy: { destination: "asc" },
-  });
+  })).filter(isChandigarhRoute);
 
   const avgRating = ratingAgg._avg.rating ?? 0;
   const reviewCount = ratingAgg._count;
+
+  const filteredRoutes = routes.filter(isChandigarhRoute);
 
   const steps = [
     { icon: MapPin, title: "Pick route & time", desc: "Choose from our fixed daily departures, both ways." },
@@ -107,8 +110,8 @@ export default async function HomePage() {
             </MountFade>
             <MountFade delay={0.2}>
               <p className="mt-4 max-w-xl text-base text-slate-700 sm:text-lg">
-                Comfortable cabs to Chandigarh and Delhi - and back.
-                Private car ₹2,400 to Chandigarh or ₹2,200 to Delhi, or shared seats for ₹600/seat to Chandigarh and ₹400/seat to Delhi. Doorstep pickup with cash on pickup.
+                Comfortable cabs for the Hisar–Chandigarh route and back to Hisar.
+                Private cars and shared seats are available for Hisar ↔ Chandigarh journeys with doorstep pickup and cash on pickup.
               </p>
             </MountFade>
           </div>
@@ -135,7 +138,7 @@ export default async function HomePage() {
                 <span className="font-bold text-slate-900">{confirmedCount}+</span> rides booked
               </div>
               <div className="rounded-2xl bg-white/80 px-4 py-2.5 text-sm text-slate-600 shadow-sm ring-1 ring-slate-100 backdrop-blur">
-                <span className="font-bold text-slate-900">4</span> daily departures · Hisar pickup
+                <span className="font-bold text-slate-900">4</span> daily departures · Hisar–Chandigarh routes
               </div>
             </div>
           </MountFade>
@@ -175,10 +178,10 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-4 section-py">
           <Reveal>
             <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Popular routes</h2>
-            <p className="mt-1 text-slate-600">Fixed daily departures from Hisar - and return trips too.</p>
+            <p className="mt-1 text-slate-600">Fixed daily departures for Hisar–Chandigarh and back to Hisar.</p>
           </Reveal>
           <Stagger className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {routes.map((r) => (
+            {filteredRoutes.map((r) => (
               <StaggerItem key={r.id}>
                 <Link
                   href={`/search?from=${encodeURIComponent(r.origin)}&to=${encodeURIComponent(r.destination)}`}
@@ -390,8 +393,8 @@ export default async function HomePage() {
                   Drive with Book My Ride
                 </h2>
                 <p className="mt-2 text-brand-50">
-                  List your car, get bookings from Hisar, and keep 93% of every
-                  fare - we charge just a 7% platform fee. Apply in 2 minutes.
+                  List your car, get bookings on the Hisar–Chandigarh route and back to Hisar,
+                  and keep 93% of every fare - we charge just a 7% platform fee. Apply in 2 minutes.
                 </p>
               </div>
               <Link href="/partner">

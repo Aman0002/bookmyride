@@ -18,15 +18,13 @@ async function main() {
     });
   }
 
-  // The 4 daily departures. Each is a time window with 3 cars pooled.
-  const CARS_PER_DEPARTURE = 3;
+  // The 2 daily departures. Each is a time window with 2 cars pooled.
+  const CARS_PER_DEPARTURE = 2;
   const SEATS_PER_CAR = 4;
 
   const departures = [
-    { origin: "Hisar", destination: "Chandigarh", start: "05:00", end: "06:00", sharedPrice: 600, privatePrice: 4000 },
-    { origin: "Chandigarh", destination: "Hisar", start: "12:30", end: "13:30", sharedPrice: 600, privatePrice: 4000 },
-    { origin: "Hisar", destination: "Delhi", start: "17:00", end: "18:00", sharedPrice: 450, privatePrice: 3000 },
-    { origin: "Delhi", destination: "Hisar", start: "19:30", end: "20:30", sharedPrice: 450, privatePrice: 3000 },
+    { origin: "Hisar", destination: "Chandigarh", start: "04:30", end: "05:30", sharedPrice: 600, privatePrice: 2400 },
+    { origin: "Chandigarh", destination: "Hisar", start: "10:30", end: "11:30", sharedPrice: 600, privatePrice: 2400 },
   ];
 
   // Upsert the current routes.
@@ -42,7 +40,6 @@ async function main() {
   const cars = [
     { name: "Maruti Baleno", plateNumber: "HR-39-A-1001", totalSeats: SEATS_PER_CAR, fuelType: "CNG + Petrol", driverName: "Suresh Kumar", driverPhone: "+91 98120 11001" },
     { name: "Maruti Baleno", plateNumber: "HR-39-A-1002", totalSeats: SEATS_PER_CAR, fuelType: "CNG + Petrol", driverName: "Rakesh Sharma", driverPhone: "+91 98120 11002" },
-    { name: "Maruti Baleno", plateNumber: "HR-39-A-1003", totalSeats: SEATS_PER_CAR, fuelType: "CNG + Petrol", driverName: "Vijay Singh", driverPhone: "+91 98120 11003" },
   ];
   for (const c of cars) {
     await prisma.car.upsert({
@@ -72,7 +69,7 @@ async function main() {
     }
   }
 
-  // One pooled schedule per departure (time window, 3 cars).
+  // One pooled schedule per departure (time window, 2 cars).
   for (const d of departures) {
     const route = await prisma.route.findUnique({
       where: { origin_destination: { origin: d.origin, destination: d.destination } },

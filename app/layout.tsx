@@ -9,7 +9,16 @@ import { BRAND } from "@/lib/constants";
 export const metadata: Metadata = {
   title: `${BRAND.name} - ${BRAND.tagline}`,
   description:
-    "Book private cars or shared seats from Hisar to Chandigarh and Delhi. Home pickup, online or cash payment.",
+
+
+
+
+
+
+
+
+
+  "Book private cars or shared seats for the Hisar–Chandigarh route and back to Hisar. Home pickup, online or cash payment.",
 };
 
 export default async function RootLayout({

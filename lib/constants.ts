@@ -18,10 +18,10 @@ export type TripStatus = (typeof TRIP_STATUSES)[number];
 export const PAYMENT_STATUSES = ["CREATED", "PAID", "FAILED"] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-export const DEFAULT_PRIVATE_PRICE = 2400;
+export const DEFAULT_PRIVATE_PRICE = 4000;
 export const DEFAULT_SHARED_PRICE = 600;
 export const DEFAULT_SEATS = 4; // bookable seats per 5-seater car (driver takes one)
-export const DEFAULT_CARS = 3; // cars pooled per departure
+export const DEFAULT_CARS = 2; // cars pooled per departure
 
 export const APPLICATION_STATUSES = ["PENDING", "APPROVED", "REJECTED"] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];

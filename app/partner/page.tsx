@@ -8,13 +8,13 @@ import { DRIVER_COMMISSION_PCT, BRAND } from "@/lib/constants";
 export const metadata = {
   title: `Drive with ${BRAND.name} - Partner with us`,
   description:
-    "List your car on Book My Ride and earn on the Hisar routes. Only a 7% platform fee.",
+    "List your car on Book My Ride and earn on the Hisar–Chandigarh route and back to Hisar. Only a 7% platform fee.",
 };
 
 export default function PartnerPage() {
   const perks = [
     { icon: Wallet, title: `Keep ${100 - DRIVER_COMMISSION_PCT}%`, desc: `We charge just ${DRIVER_COMMISSION_PCT}% per fare - the rest is yours.` },
-    { icon: Users, title: "Steady bookings", desc: "Get riders on popular Hisar routes without chasing customers." },
+    { icon: Users, title: "Steady bookings", desc: "Get riders on the popular Hisar–Chandigarh route and back to Hisar without chasing customers." },
     { icon: MapPin, title: "You choose", desc: "Drive the routes and timings that suit you." },
     { icon: TrendingUp, title: "Grow with us", desc: "Build ratings and get more visibility as you complete rides." },
   ];
@@ -42,7 +42,7 @@ export default function PartnerPage() {
               Turn your car into income
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-slate-200">
-              List your car with {BRAND.name}, serve riders across Hisar, and
+              List your car with {BRAND.name}, serve riders on the Hisar–Chandigarh route and back to Hisar, and
               keep {100 - DRIVER_COMMISSION_PCT}% of every fare. We only take a{" "}
               {DRIVER_COMMISSION_PCT}% platform fee.
             </p>
