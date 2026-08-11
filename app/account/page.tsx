@@ -50,13 +50,27 @@ export default async function AccountPage() {
             <span>
               {b.type === "PRIVATE"
                 ? "Private car"
-                : `${b.seats} shared seat${b.seats > 1 ? "s" : ""}`}
+                : b.type === "PARCEL"
+                  ? "Parcel delivery"
+                  : `${b.seats} shared seat${b.seats > 1 ? "s" : ""}`}
             </span>
           </div>
           <div className="mt-2 text-sm text-slate-500">
             <span className="font-medium text-slate-600">Pickup:</span>{" "}
             {b.pickupAddress}
           </div>
+          {b.type === "PARCEL" && (
+            <div className="mt-2 space-y-1 text-sm text-slate-600">
+              {b.deliveryAddress && (
+                <div><span className="font-medium text-slate-700">Delivery:</span> {b.deliveryAddress}</div>
+              )}
+              {b.receiverName && (
+                <div><span className="font-medium text-slate-700">Receiver:</span> {b.receiverName} · {b.receiverPhone}</div>
+              )}
+              {b.parcelDescription && <div>{b.parcelDescription}</div>}
+              {b.parcelWeightKg != null && <div>Weight: {b.parcelWeightKg} kg</div>}
+            </div>
+          )}
         </div>
         <div className="text-right">
           {statusBadge(b.status)}

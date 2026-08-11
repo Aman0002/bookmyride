@@ -1,6 +1,8 @@
 import { prisma } from "./prisma";
 import { geocodeAddress, haversineKm, HISAR_CENTER } from "./geo";
 
+export type ParcelLocation = "hisar" | "chandigarh";
+
 export type PickupValidation = {
   ok: boolean;
   withinRadius: boolean;
@@ -76,5 +78,31 @@ export async function validatePickup(
     message: withinRadius
       ? `Great! Pickup available (~${Math.round(distanceKm * 10) / 10} km from ${area.name} center).`
       : `Sorry, this address is ~${Math.round(distanceKm * 10) / 10} km away, outside our ${area.radiusKm} km ${area.name} service area.`,
+  };
+}
+
+export function normalizeParcelLocation(value: string): ParcelLocation | null {
+  const normalized = value.trim().toLowerCase();
+  if (normalized.includes("hisar")) return "hisar";
+  if (normalized.includes("chandigarh") || normalized.includes("isbt")) return "chandigarh";
+  return null;
+}
+
+export function validateParcelLocation(location: string): { ok: boolean; location: ParcelLocation | null; message: string } {
+  const normalized = normalizeParcelLocation(location);
+  if (!normalized) {
+    return {
+      ok: false,
+      location: null,
+      message: "Please enter a valid parcel location. For Chandigarh, use ISBT Chandigarh.",
+    };
+  }
+
+  return {
+    ok: true,
+    location: normalized,
+    message: normalized === "hisar"
+      ? "Parcel pickup/delivery is available in Hisar."
+      : "Parcel pickup/delivery is available at the Chandigarh service point (ISBT Chandigarh).",
   };
 }

@@ -14,7 +14,7 @@ import { Button, Input, Label, Card } from "@/components/ui";
 import { formatINR } from "@/lib/utils";
 import { DEFAULT_SEATS } from "@/lib/constants";
 
-type RideType = "SHARED" | "PRIVATE";
+type RideType = "SHARED" | "PRIVATE" | "PARCEL";
 type PayMode = "COD";
 
 function loadRazorpayScript(): Promise<boolean> {
@@ -57,12 +57,19 @@ export default function BookingForm({
   const [name, setName] = useState(defaultName);
   const [phone, setPhone] = useState(defaultPhone);
   const [address, setAddress] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [parcelType, setParcelType] = useState("small");
+  const [parcelWeight, setParcelWeight] = useState("1");
+  const [parcelDescription, setParcelDescription] = useState("");
+  const [receiverName, setReceiverName] = useState("");
+  const [receiverPhone, setReceiverPhone] = useState("");
+  const [isFragile, setIsFragile] = useState(false);
   const [payMode] = useState<PayMode>("COD");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [doneId, setDoneId] = useState<string | null>(null);
 
-  const amount = type === "PRIVATE" ? privatePrice : sharedPrice * seats;
+  const amount = type === "PARCEL" ? 200 : type === "PRIVATE" ? privatePrice : sharedPrice * seats;
 
 
   async function submit() {
@@ -70,6 +77,16 @@ export default function BookingForm({
     if (!address.trim()) {
       setError("Please enter a pickup address.");
       return;
+    }
+    if (type === "PARCEL") {
+      if (!deliveryAddress.trim()) {
+        setError("Please enter a delivery address.");
+        return;
+      }
+      if (!receiverName.trim() || !receiverPhone.trim()) {
+        setError("Please enter receiver details for the parcel.");
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -85,6 +102,13 @@ export default function BookingForm({
           passengerName: name,
           passengerPhone: phone,
           pickupAddress: address,
+          deliveryAddress: type === "PARCEL" ? deliveryAddress : undefined,
+          parcelType: type === "PARCEL" ? parcelType : undefined,
+          parcelWeightKg: type === "PARCEL" ? Number(parcelWeight) : undefined,
+          parcelDescription: type === "PARCEL" ? parcelDescription : undefined,
+          receiverName: type === "PARCEL" ? receiverName : undefined,
+          receiverPhone: type === "PARCEL" ? receiverPhone : undefined,
+          isFragile: type === "PARCEL" ? isFragile : undefined,
         }),
       });
       const data = await res.json();
@@ -136,7 +160,7 @@ export default function BookingForm({
       <h2 className="text-lg font-semibold text-slate-900">Complete your booking</h2>
 
       {/* Ride type */}
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
         <button
           type="button"
           onClick={() => canShare && setType("SHARED")}
@@ -169,6 +193,19 @@ export default function BookingForm({
             {canPrivate ? `${formatINR(privatePrice)} total` : "Not available"}
           </div>
         </button>
+        <button
+          type="button"
+          onClick={() => setType("PARCEL")}
+          className={`rounded-xl border p-4 text-left transition ${
+            type === "PARCEL"
+              ? "border-brand-600 bg-brand-50"
+              : "border-slate-200 hover:border-slate-300"
+          }`}
+        >
+          <MapPin className="h-5 w-5 text-brand-700" />
+          <div className="mt-2 font-semibold text-slate-900">Send parcel</div>
+          <div className="text-sm text-slate-500">Single parcel delivery · {formatINR(200)}</div>
+        </button>
       </div>
 
       {type === "SHARED" && (
@@ -198,6 +235,51 @@ export default function BookingForm({
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {type === "PARCEL" && (
+        <div className="mt-6 space-y-4 rounded-xl border border-brand-100 bg-brand-50/60 p-4">
+        <div className="text-sm text-slate-600">
+          In Hisar, you can enter a pickup address. For Chandigarh, parcels must be sent/received at ISBT Chandigarh.
+        </div>
+          <div>
+            <Label>Parcel type</Label>
+            <select value={parcelType} onChange={(e) => setParcelType(e.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+              <option value="small">Small parcel</option>
+              <option value="medium">Medium parcel</option>
+              <option value="document">Documents</option>
+              <option value="fragile">Fragile parcel</option>
+            </select>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label>Weight (kg)</Label>
+              <Input value={parcelWeight} onChange={(e) => setParcelWeight(e.target.value)} inputMode="decimal" />
+            </div>
+            <div>
+              <Label>Delivery point</Label>
+              <Input value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} placeholder="Enter Hisar address or ISBT Chandigarh" />
+            </div>
+          </div>
+          <div>
+            <Label>Parcel description</Label>
+            <Input value={parcelDescription} onChange={(e) => setParcelDescription(e.target.value)} placeholder="What is being delivered?" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label>Receiver name</Label>
+              <Input value={receiverName} onChange={(e) => setReceiverName(e.target.value)} />
+            </div>
+            <div>
+              <Label>Receiver phone</Label>
+              <Input value={receiverPhone} onChange={(e) => setReceiverPhone(e.target.value)} inputMode="numeric" />
+            </div>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input type="checkbox" checked={isFragile} onChange={(e) => setIsFragile(e.target.checked)} />
+            Mark as fragile
+          </label>
         </div>
       )}
 

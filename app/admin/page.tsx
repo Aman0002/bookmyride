@@ -79,7 +79,7 @@ export default async function AdminDashboard() {
                       <Clock className="h-4 w-4" />
                       {formatTripDateTimeIST(b.trip.date, b.trip.departureTime)}
                     </span>
-                    <span>{b.type === "PRIVATE" ? "Private" : `${b.seats} seat(s)`}</span>
+                    <span>{b.type === "PRIVATE" ? "Private" : b.type === "PARCEL" ? "Parcel" : `${b.seats} seat(s)`}</span>
                     <span>{formatINR(b.amount)}</span>
                     <span>{b.paymentMode === "COD" ? "COD" : "Online"}</span>
                   </div>
@@ -100,10 +100,20 @@ export default async function AdminDashboard() {
 
                   <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Pickup address
+                      {b.type === "PARCEL" ? "Parcel details" : "Pickup address"}
                     </div>
                     <div className="mt-1 break-words text-sm text-slate-700">
-                      {b.pickupAddress || "—"}
+                      {b.type === "PARCEL" ? (
+                        <>
+                          <div>Pickup: {b.pickupAddress || "—"}</div>
+                          {b.deliveryAddress && <div>Delivery: {b.deliveryAddress}</div>}
+                          {b.receiverName && <div>Receiver: {b.receiverName} · {b.receiverPhone}</div>}
+                          {b.parcelDescription && <div>Description: {b.parcelDescription}</div>}
+                          {b.parcelWeightKg != null && <div>Weight: {b.parcelWeightKg} kg</div>}
+                        </>
+                      ) : (
+                        b.pickupAddress || "—"
+                      )}
                     </div>
                     {b.pickupDistanceKm != null && (
                       <div className="mt-1 text-xs text-slate-500">

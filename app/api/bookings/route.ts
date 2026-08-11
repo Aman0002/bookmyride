@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { validatePickup } from "@/lib/pickup";
+import { validatePickup, validateParcelLocation } from "@/lib/pickup";
 import { createOrder } from "@/lib/razorpay";
 import { confirmAndNotify } from "@/lib/booking";
 import { recomputeTripStatus, computeAvailability, isTripExpired } from "@/lib/trips";
@@ -11,7 +11,7 @@ import { HISAR_CENTER } from "@/lib/geo";
 
 const schema = z.object({
   tripId: z.string(),
-  type: z.enum(["SHARED", "PRIVATE"]),
+  type: z.enum(["SHARED", "PRIVATE", "PARCEL"]),
   seats: z.number().int().min(1).max(10).default(1),
   paymentMode: z.enum(["COD"]),
   passengerName: z.string().trim().min(1),
@@ -19,6 +19,13 @@ const schema = z.object({
   pickupAddress: z.string().trim().min(4),
   pickupLat: z.number().optional(),
   pickupLng: z.number().optional(),
+  deliveryAddress: z.string().trim().optional(),
+  parcelType: z.string().trim().optional(),
+  parcelWeightKg: z.number().optional(),
+  parcelDescription: z.string().trim().optional(),
+  receiverName: z.string().trim().optional(),
+  receiverPhone: z.string().trim().optional(),
+  isFragile: z.boolean().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -52,12 +59,22 @@ export async function POST(req: NextRequest) {
   const pickupLat = pickup.lat ?? d.pickupLat ?? HISAR_CENTER.lat;
   const pickupLng = pickup.lng ?? d.pickupLng ?? HISAR_CENTER.lng;
 
+  if (d.type === "PARCEL") {
+    const deliveryValidation = validateParcelLocation(d.deliveryAddress?.trim() ?? "");
+    if (!deliveryValidation.ok || !deliveryValidation.location) {
+      return NextResponse.json({ error: deliveryValidation.message }, { status: 400 });
+    }
+  }
+
   // Pooled availability + pricing.
   const avail = computeAvailability(trip);
   let amount: number;
   let seats: number;
 
-  if (d.type === "PRIVATE") {
+  if (d.type === "PARCEL") {
+    amount = 200;
+    seats = 0;
+  } else if (d.type === "PRIVATE") {
     if (!avail.canPrivate) {
       return NextResponse.json(
         { error: "No private car available for this departure." },
@@ -97,6 +114,13 @@ export async function POST(req: NextRequest) {
       pickupDistanceKm: pickup.distanceKm ?? 0,
       passengerName: d.passengerName,
       passengerPhone: d.passengerPhone,
+      deliveryAddress: d.deliveryAddress?.trim() || null,
+      parcelType: d.parcelType?.trim() || null,
+      parcelWeightKg: d.parcelWeightKg ?? null,
+      parcelDescription: d.parcelDescription?.trim() || null,
+      receiverName: d.receiverName?.trim() || null,
+      receiverPhone: d.receiverPhone?.trim() || null,
+      isFragile: d.isFragile ?? false,
       status: "PENDING",
     },
   });

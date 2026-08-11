@@ -1,4 +1,4 @@
-export const BOOKING_TYPES = ["SHARED", "PRIVATE"] as const;
+export const BOOKING_TYPES = ["SHARED", "PRIVATE", "PARCEL"] as const;
 export type BookingType = (typeof BOOKING_TYPES)[number];
 
 export const PAYMENT_MODES = ["COD"] as const;
